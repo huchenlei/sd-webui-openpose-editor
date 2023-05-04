@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Gradio + Vue.js Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="gradio-container"></div>
+    <input type="text" v-model="message">
+    <p>{{ message }}</p>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        message: 'Hello, Gradio!'
+      }
+    });
+  </script>
+</body>
+</html>
