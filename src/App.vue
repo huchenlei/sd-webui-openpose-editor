@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type App } from 'vue';
+import { defineComponent, type App, onMounted } from 'vue';
 import { fabric } from 'fabric';
 import _ from 'lodash';
 
@@ -61,12 +61,23 @@ class OpenposeConnection extends fabric.Line {
   }
 };
 
-interface OpenposeObject {
+class OpenposeObject {
   keypoints: OpenposeKeypoint2D[];
   connections: OpenposeConnection[];
+
+  constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
+    this.keypoints = keypoints;
+    this.connections = connections;
+  }
+
+  addToCanvas(canvas: fabric.Canvas) {
+    this.keypoints.forEach(p => canvas.add(p));
+    this.connections.forEach(c => canvas.add(c));
+  }
+
 };
 
-class OpenposeBody implements OpenposeObject {
+class OpenposeBody extends OpenposeObject {
   keypoints: OpenposeKeypoint2D[];
   connections: OpenposeConnection[];
 
@@ -125,7 +136,7 @@ class OpenposeBody implements OpenposeObject {
       throw `Wrong number of keypoints for openpose body(Coco format). Expect 18 but got ${rawKeypoints.length}.`
     }
 
-    this.keypoints = _.zipWith(rawKeypoints, OpenposeBody.colors, OpenposeBody.keypoint_names,
+    const keypoints = _.zipWith(rawKeypoints, OpenposeBody.colors, OpenposeBody.keypoint_names,
       (p, color, keypoint_name) => new OpenposeKeypoint2D(
         p[0],
         p[1],
@@ -134,14 +145,16 @@ class OpenposeBody implements OpenposeObject {
         keypoint_name
       ));
 
-    this.connections = _.zipWith(OpenposeBody.keypoints_connections, OpenposeBody.colors.slice(0, 17),
+    const connections = _.zipWith(OpenposeBody.keypoints_connections, OpenposeBody.colors.slice(0, 17),
       (connection, color) => {
         return new OpenposeConnection(
-          this.keypoints[connection[0]],
-          this.keypoints[connection[1]],
+          keypoints[connection[0]],
+          keypoints[connection[1]],
           formatColor(color)
         );
       });
+
+    super(keypoints, connections);
   }
 };
 
@@ -163,6 +176,7 @@ interface AppData {
   personName: string;
   hideInvisibleKeypoints: boolean;
   people: OpenposePerson[];
+  canvas: fabric.Canvas | null;
 };
 
 let id = 0
@@ -182,13 +196,24 @@ export default defineComponent({
       hideInvisibleKeypoints: false,
       people: [
         new OpenposePerson('Example Person', new OpenposeBody(default_keypoints)),
-      ]
+      ],
+      canvas: null,
     }
   },
+  mounted() {
+    this.$nextTick(() => {
+      this.canvas = new fabric.Canvas(<HTMLCanvasElement>this.$refs.editorCanvas, {
+        backgroundColor: '#000',
+        preserveObjectStacking: true,
+      });
+    });
+  },  
   methods: {
     addPerson() {
-      this.people.push(new OpenposePerson(this.personName, new OpenposeBody(default_keypoints)));
+      const newPerson = new OpenposePerson(this.personName, new OpenposeBody(default_keypoints));
+      this.people.push(newPerson);
       this.personName = '';
+      newPerson.body.addToCanvas(this.canvas!);
     },
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
@@ -203,7 +228,7 @@ export default defineComponent({
     <button>Add Person</button>
   </form>
   <ul>
-    <li v-for="person in people" :key="person.id">
+    <li v-for="person in people" :key="person.id"> 
       <input type="checkbox" v-model="person.visible">
       <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
       <button @click="removePerson(person)">X</button>
@@ -212,6 +237,8 @@ export default defineComponent({
   <button @click="hideInvisibleKeypoints = !hideInvisibleKeypoints">
     {{ hideInvisibleKeypoints ? 'Show all' : 'Hide completed' }}
   </button>
+
+  <canvas ref="editorCanvas" width="512" height="512"></canvas>
 </template>
 
 <style>
