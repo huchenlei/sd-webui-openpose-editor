@@ -75,12 +75,14 @@ class OpenposeObject {
     this.connections.forEach(c => canvas.add(c));
   }
 
+  removeFromCanvas(canvas: fabric.Canvas) {
+    this.keypoints.forEach(p => canvas.remove(p));
+    this.connections.forEach(c => canvas.remove(c));
+  }
+
 };
 
 class OpenposeBody extends OpenposeObject {
-  keypoints: OpenposeKeypoint2D[];
-  connections: OpenposeConnection[];
-
   static keypoints_connections: [number, number][] = [
     [0, 1], [1, 2], [2, 3], [3, 4],
     [1, 5], [5, 6], [6, 7], [1, 8],
@@ -170,6 +172,14 @@ class OpenposePerson {
     this.id = id++;
     this.visible = true;
   }
+
+  addToCanvas(canvas: fabric.Canvas) {
+    this.body.addToCanvas(canvas);
+  }
+
+  removeFromCanvas(canvas: fabric.Canvas) {
+    this.body.removeFromCanvas(canvas);
+  }
 };
 
 interface AppData {
@@ -206,6 +216,8 @@ export default defineComponent({
         backgroundColor: '#000',
         preserveObjectStacking: true,
       });
+
+      this.people.forEach(p => p.addToCanvas(this.canvas!));
     });
   },  
   methods: {
@@ -213,10 +225,11 @@ export default defineComponent({
       const newPerson = new OpenposePerson(this.personName, new OpenposeBody(default_keypoints));
       this.people.push(newPerson);
       this.personName = '';
-      newPerson.body.addToCanvas(this.canvas!);
+      newPerson.addToCanvas(this.canvas!);
     },
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
+      person.removeFromCanvas(this.canvas!);
     }
   }
 });
