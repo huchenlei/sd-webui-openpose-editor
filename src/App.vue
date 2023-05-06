@@ -2,7 +2,7 @@
 import { defineComponent, type App } from 'vue';
 import { fabric } from 'fabric';
 import _ from 'lodash';
-import {PlusSquareOutlined, CloseOutlined} from '@ant-design/icons-vue';
+import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
 import VisibleSwitchVue from './components/VisibleSwitch.vue';
 
 class OpenposeKeypoint2D extends fabric.Circle {
@@ -11,7 +11,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
   confidence: number;
   name: string;
   connections: Array<OpenposeConnection>;
-  
+
   constructor(x: number, y: number, confidence: number, color: string, name: string) {
     super({
       radius: OpenposeKeypoint2D.radius,
@@ -69,6 +69,24 @@ class OpenposeConnection extends fabric.Line {
     this.k2 = k2;
     this.k1.addConnection(this);
     this.k2.addConnection(this);
+  }
+
+  /**
+   * Update the connection because the coords of any of the keypoints has 
+   * changed. 
+   */
+  update(p: OpenposeKeypoint2D, origin: fabric.Point) {
+    if (p === this.k1) {
+      this.set({
+        x1: this.k1.x + origin.x,
+        y1: this.k1.y + origin.y,
+      } as Partial<this>);
+    } else if (p === this.k2) {
+      this.set({
+        x2: this.k2.x + origin.x,
+        y2: this.k2.y + origin.y,
+      } as Partial<this>);
+    }
   }
 };
 
@@ -235,6 +253,26 @@ export default defineComponent({
 
       this.people.forEach(p => p.addToCanvas(this.canvas!));
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+
+      this.canvas.on('object:moving', event => {
+        if (event.target === undefined)
+          return;
+        
+        const target = event.target;
+        if (target instanceof fabric.ActiveSelection) {
+          // Group of points movement.
+          const groupCenter = target.getCenterPoint();
+          target.forEachObject(obj => {
+            if (obj instanceof OpenposeKeypoint2D) {
+              obj.connections.forEach(c => c.update(obj, groupCenter));
+            }
+          });
+        } else if (target instanceof OpenposeKeypoint2D) {
+          // Single keypoint movement.
+          target.connections.forEach(c => c.update(target, new fabric.Point(0, 0)));
+        }
+        this.canvas?.renderAll();
+      });
     });
   },
   methods: {
@@ -265,25 +303,25 @@ export default defineComponent({
 </script>
 
 <template>
-  <a-input type="number" addon-before="Width" addon-after="px" v-model="canvasWidth"/>
-  <a-input type="number" addon-before="Height" addon-after="px" v-model="canvasHeight"/>
+  <a-input type="number" addon-before="Width" addon-after="px" v-model="canvasWidth" />
+  <a-input type="number" addon-before="Height" addon-after="px" v-model="canvasHeight" />
   <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
-  <plus-square-outlined @click="addPerson"/>
+  <plus-square-outlined @click="addPerson" />
   <a-collapse>
     <a-collapse-panel v-for="person in people" :key="person.id">
       <template #header>
-        <VisibleSwitchVue v-model="person.visible"/>
+        <VisibleSwitchVue v-model="person.visible" />
         <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
-        <close-outlined @click="removePerson(person)"/>
+        <close-outlined @click="removePerson(person)" />
       </template>
-      
+
       <a-list size="small">
         <a-list-item v-for="keypoint in person.body.keypoints">
-          <VisibleSwitchVue v-model="keypoint._visible"/>
+          <VisibleSwitchVue v-model="keypoint._visible" />
           <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
         </a-list-item>
       </a-list>
-    </a-collapse-panel>  
+    </a-collapse-panel>
   </a-collapse>
   <canvas ref="editorCanvas"></canvas>
 </template>
@@ -292,4 +330,4 @@ export default defineComponent({
 .hidden {
   opacity: 70%;
 }
-</style>
+</style> 
