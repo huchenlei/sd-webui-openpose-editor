@@ -11,7 +11,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
   confidence: number;
   name: string;
   connections: Array<OpenposeConnection>;
-
+  
   constructor(x: number, y: number, confidence: number, color: string, name: string) {
     super({
       radius: OpenposeKeypoint2D.radius,
@@ -22,6 +22,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
       strokeWidth: 1,
       hasControls: false, // Disallow user to scale the keypoint circle.
       hasBorders: false,
+      visible: true,
     });
 
     this.confidence = confidence;
@@ -39,6 +40,14 @@ class OpenposeKeypoint2D extends fabric.Circle {
 
   get y(): number {
     return this.top! + OpenposeKeypoint2D.radius;
+  }
+
+  get _visible(): boolean {
+    return this.visible === undefined ? true : this.visible;
+  }
+
+  set _visible(visible: boolean) {
+    this.visible = visible;
   }
 };
 
@@ -260,17 +269,22 @@ export default defineComponent({
   <a-input type="number" addon-before="Height" addon-after="px" v-model="canvasHeight"/>
   <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
   <plus-square-outlined @click="addPerson"/>
-  <ul>
-    <li v-for="person in people" :key="person.id">
-      <VisibleSwitchVue v-model="person.visible"/>
-      <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
-      <close-outlined @click="removePerson(person)"/>
-    </li>
-  </ul>
-  <button @click="hideInvisibleKeypoints = !hideInvisibleKeypoints">
-    {{ hideInvisibleKeypoints ? 'Show all' : 'Hide completed' }}
-  </button>
-
+  <a-collapse>
+    <a-collapse-panel v-for="person in people" :key="person.id">
+      <template #header>
+        <VisibleSwitchVue v-model="person.visible"/>
+        <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
+        <close-outlined @click="removePerson(person)"/>
+      </template>
+      
+      <a-list size="small">
+        <a-list-item v-for="keypoint in person.body.keypoints">
+          <VisibleSwitchVue v-model="keypoint._visible"/>
+          <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
+        </a-list-item>
+      </a-list>
+    </a-collapse-panel>  
+  </a-collapse>
   <canvas ref="editorCanvas"></canvas>
 </template>
 
