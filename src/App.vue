@@ -2,6 +2,8 @@
 import { defineComponent, type App } from 'vue';
 import { fabric } from 'fabric';
 import _ from 'lodash';
+import {PlusSquareOutlined, CloseOutlined} from '@ant-design/icons-vue';
+import VisibleSwitchVue from './components/VisibleSwitch.vue';
 
 class OpenposeKeypoint2D extends fabric.Circle {
   static radius: number = 2;
@@ -166,11 +168,11 @@ class OpenposePerson {
   id: number;
   visible: boolean;
 
-  constructor(name: string, body: OpenposeBody) {
-    this.name = name;
+  constructor(name: string | null, body: OpenposeBody) {
     this.body = body;
     this.id = id++;
     this.visible = true;
+    this.name = name == null ? `Person ${this.id}` : name;
   }
 
   addToCanvas(canvas: fabric.Canvas) {
@@ -228,16 +230,14 @@ export default defineComponent({
   },
   methods: {
     addPerson() {
-      const newPerson = new OpenposePerson(this.personName, new OpenposeBody(default_keypoints));
+      const newPerson = new OpenposePerson(null, new OpenposeBody(default_keypoints));
       this.people.push(newPerson);
-      this.personName = '';
       newPerson.addToCanvas(this.canvas!);
     },
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
       person.removeFromCanvas(this.canvas!);
     },
-
     resizeCanvas(newWidth: number, newHeight: number) {
       if (!this.canvas)
         return;
@@ -246,23 +246,25 @@ export default defineComponent({
       this.canvas.calcOffset();
       this.canvas.requestRenderAll();
     },
+  },
+  components: {
+    PlusSquareOutlined,
+    CloseOutlined,
+    VisibleSwitchVue,
   }
 });
 </script>
 
 <template>
-  <input type="number" v-model="canvasWidth"/>
-  <input type="number" v-model="canvasHeight"/>
-  <input type="button" @click="resizeCanvas(canvasWidth, canvasHeight)" value="Resize Canvas"/>
-  <form @submit.prevent="addPerson">
-    <input v-model="personName">
-    <button>Add Person</button>
-  </form>
+  <a-input type="number" addon-before="Width" addon-after="px" v-model="canvasWidth"/>
+  <a-input type="number" addon-before="Height" addon-after="px" v-model="canvasHeight"/>
+  <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
+  <plus-square-outlined @click="addPerson"/>
   <ul>
     <li v-for="person in people" :key="person.id">
-      <input type="checkbox" v-model="person.visible">
+      <VisibleSwitchVue v-model="person.visible"/>
       <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
-      <button @click="removePerson(person)">X</button>
+      <close-outlined @click="removePerson(person)"/>
     </li>
   </ul>
   <button @click="hideInvisibleKeypoints = !hideInvisibleKeypoints">
@@ -274,6 +276,6 @@ export default defineComponent({
 
 <style>
 .hidden {
-  display: none;
+  opacity: 70%;
 }
 </style>
