@@ -257,7 +257,7 @@ export default defineComponent({
       this.canvas.on('object:moving', event => {
         if (event.target === undefined)
           return;
-        
+
         const target = event.target;
         if (target instanceof fabric.ActiveSelection) {
           // Group of points movement.
@@ -303,31 +303,47 @@ export default defineComponent({
 </script>
 
 <template>
-  <a-input type="number" addon-before="Width" addon-after="px" v-model="canvasWidth" />
-  <a-input type="number" addon-before="Height" addon-after="px" v-model="canvasHeight" />
-  <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
-  <plus-square-outlined @click="addPerson" />
-  <a-collapse>
-    <a-collapse-panel v-for="person in people" :key="person.id">
-      <template #header>
-        <VisibleSwitchVue v-model="person.visible" />
-        <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
-        <close-outlined @click="removePerson(person)" />
-      </template>
+  <a-row>
 
-      <a-list size="small">
-        <a-list-item v-for="keypoint in person.body.keypoints">
-          <VisibleSwitchVue v-model="keypoint._visible" />
-          <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
-        </a-list-item>
-      </a-list>
-    </a-collapse-panel>
-  </a-collapse>
-  <canvas ref="editorCanvas"></canvas>
+  </a-row>
+  <a-row>
+    <a-col :span="8">
+      <div>
+        <a-input-number type="inputNumber" addon-before="Width" addon-after="px" v-model:value="canvasWidth" :min="64"
+          :max="4096" />
+        <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
+          :max="4096" />
+        <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
+      </div>
+
+      <plus-square-outlined @click="addPerson" />
+      <a-collapse>
+        <a-collapse-panel v-for="person in people" :key="person.id">
+          <template #header>
+            <VisibleSwitchVue v-model="person.visible" />
+            <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
+            <close-outlined @click="removePerson(person)" class="close-icon" />
+          </template>
+
+          <a-list size="small">
+            <a-list-item v-for="keypoint in person.body.keypoints">
+              <VisibleSwitchVue v-model="keypoint._visible" />
+              <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
+            </a-list-item>
+          </a-list>
+        </a-collapse-panel>
+      </a-collapse>
+    </a-col>
+
+    <a-col :span="16">
+      <canvas ref="editorCanvas"></canvas>
+    </a-col>
+  </a-row>
 </template>
 
 <style>
 .hidden {
-  opacity: 70%;
+  opacity: 50%;
+  text-decoration: line-through;
 }
 </style> 

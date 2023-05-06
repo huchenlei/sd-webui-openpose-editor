@@ -1,2 +1,22 @@
 @import './base.css';
 
+.visible-switch {
+    padding: 3px;
+}
+
+.ant-collapse-header {
+    align-items: center !important;
+    justify-content: flex-start;
+}
+
+.ant-list-item {
+    justify-content: flex-start;
+}
+
+.close-icon {
+    margin-left: auto;
+}
+
+.ant-col {
+    padding: 10px;
+}

@@ -30,7 +30,7 @@ export default {
 </script>
 
 <template>
-    <div @click="toggleState" class="visible-switch">
+    <div @click.stop="toggleState" class="visible-switch">
         <eye-outlined v-if="state" />
         <eye-invisible-outlined v-else />
     </div>
