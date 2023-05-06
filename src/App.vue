@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type App, onMounted } from 'vue';
+import { defineComponent, type App } from 'vue';
 import { fabric } from 'fabric';
 import _ from 'lodash';
 
@@ -183,6 +183,9 @@ class OpenposePerson {
 };
 
 interface AppData {
+  canvasHeight: number;
+  canvasWidth: number;
+
   personName: string;
   hideInvisibleKeypoints: boolean;
   people: OpenposePerson[];
@@ -202,6 +205,8 @@ const default_keypoints: [number, number, number][] = [
 export default defineComponent({
   data(): AppData {
     return {
+      canvasHeight: 512,
+      canvasWidth: 512,
       personName: '',
       hideInvisibleKeypoints: false,
       people: [
@@ -218,8 +223,9 @@ export default defineComponent({
       });
 
       this.people.forEach(p => p.addToCanvas(this.canvas!));
+      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
     });
-  },  
+  },
   methods: {
     addPerson() {
       const newPerson = new OpenposePerson(this.personName, new OpenposeBody(default_keypoints));
@@ -230,18 +236,30 @@ export default defineComponent({
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
       person.removeFromCanvas(this.canvas!);
-    }
+    },
+
+    resizeCanvas(newWidth: number, newHeight: number) {
+      if (!this.canvas)
+        return;
+      this.canvas.setWidth(newWidth);
+      this.canvas.setHeight(newHeight);
+      this.canvas.calcOffset();
+      this.canvas.requestRenderAll();
+    },
   }
 });
 </script>
 
 <template>
+  <input type="number" v-model="canvasWidth"/>
+  <input type="number" v-model="canvasHeight"/>
+  <input type="button" @click="resizeCanvas(canvasWidth, canvasHeight)" value="Resize Canvas"/>
   <form @submit.prevent="addPerson">
     <input v-model="personName">
     <button>Add Person</button>
   </form>
   <ul>
-    <li v-for="person in people" :key="person.id"> 
+    <li v-for="person in people" :key="person.id">
       <input type="checkbox" v-model="person.visible">
       <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
       <button @click="removePerson(person)">X</button>
@@ -251,7 +269,7 @@ export default defineComponent({
     {{ hideInvisibleKeypoints ? 'Show all' : 'Hide completed' }}
   </button>
 
-  <canvas ref="editorCanvas" width="512" height="512"></canvas>
+  <canvas ref="editorCanvas"></canvas>
 </template>
 
 <style>
