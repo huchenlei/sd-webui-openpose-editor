@@ -1,9 +1,9 @@
 <script lang="ts">
-import { defineComponent, type App, watch } from 'vue';
+import { defineComponent, type App } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
 import PersonPanel from './components/PersonPanel.vue';
-import {OpenposePerson, OpenposeBody, OpenposeKeypoint2D} from './Openpose';
+import { OpenposePerson, OpenposeBody, OpenposeKeypoint2D } from './Openpose';
 
 interface AppData {
   canvasHeight: number;
@@ -114,12 +114,8 @@ export default defineComponent({
 
       <plus-square-outlined @click="addPerson" />
       <a-collapse>
-        <PersonPanel
-          v-for="person in people"
-          :person="person"
-          @removePerson="removePerson"
-          @visible-change="onVisibleChange"
-        />
+        <PersonPanel v-for="person in people" :person="person" @removePerson="removePerson"
+          @visible-change="onVisibleChange" />
       </a-collapse>
     </a-col>
 
