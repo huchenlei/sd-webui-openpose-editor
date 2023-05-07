@@ -91,6 +91,22 @@ export default defineComponent({
         this.canvas?.renderAll();
       });
     },
+    onActivePersonPanelChange(activePanelIndicies: string[]) {
+      if (!this.canvas) return;
+
+      this.canvas.discardActiveObject();
+      const allKeypoints: OpenposeKeypoint2D[] = [];
+      activePanelIndicies.forEach(i => {
+        const person = this.people[parseInt(i)];
+        allKeypoints.push(...person.body.keypoints);
+      });
+      const activeSelection = new fabric.ActiveSelection(
+          allKeypoints,
+          { canvas: this.canvas }
+      );
+      this.canvas.setActiveObject(activeSelection);
+      this.canvas.renderAll();
+    },
   },
   components: {
     PlusSquareOutlined,
@@ -112,7 +128,7 @@ export default defineComponent({
       </div>
 
       <plus-square-outlined @click="addPerson" />
-      <a-collapse>
+      <a-collapse @change="onActivePersonPanelChange">
         <PersonPanel v-for="person in people" :person="person" @removePerson="removePerson"
           @visible-change="onVisibleChange" />
       </a-collapse>
