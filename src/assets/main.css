@@ -13,7 +13,8 @@
     justify-content: flex-start;
 }
 
-.close-icon {
+/* Right align last item in the flex container with `flex-start` */
+.close-icon, .coords-group {
     margin-left: auto;
 }
 

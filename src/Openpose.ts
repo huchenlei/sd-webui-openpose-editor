@@ -3,7 +3,8 @@ import _ from 'lodash';
 
 class OpenposeKeypoint2D extends fabric.Circle {
     static radius: number = 2;
-
+    static idCounter: number = 0;
+    id: number;
     confidence: number;
     name: string;
     connections: Array<OpenposeConnection>;
@@ -24,6 +25,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.confidence = confidence;
         this.name = name;
         this.connections = [];
+        this.id = OpenposeKeypoint2D.idCounter++;
     }
 
     addConnection(connection: OpenposeConnection): void {
@@ -34,8 +36,16 @@ class OpenposeKeypoint2D extends fabric.Circle {
         return this.left! + OpenposeKeypoint2D.radius;
     }
 
+    set x(x: number) {
+        this.left = x - OpenposeKeypoint2D.radius;
+    }
+
     get y(): number {
         return this.top! + OpenposeKeypoint2D.radius;
+    }
+
+    set y(y: number) {
+        this.top = y - OpenposeKeypoint2D.radius;
     }
 
     get _visible(): boolean {
@@ -282,9 +292,9 @@ class OpenposePerson {
     id: number;
     visible: boolean;
 
-    constructor(name: string | null, body: OpenposeBody, 
+    constructor(name: string | null, body: OpenposeBody,
         left_hand: OpenposeHand | undefined = undefined,
-        right_hand: OpenposeHand | undefined = undefined, 
+        right_hand: OpenposeHand | undefined = undefined,
         face: OpenposeFace | undefined = undefined
     ) {
         this.body = body;
