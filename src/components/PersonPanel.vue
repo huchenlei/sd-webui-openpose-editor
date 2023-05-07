@@ -40,7 +40,6 @@ export default {
       for (const keypoint of this.person.body.keypoints) {
         keypoint._visible = visible;
       }
-      console.log("Person visibility update: " + visible);
     },
     removePerson() {
       this.$emit("removePerson", this.person);

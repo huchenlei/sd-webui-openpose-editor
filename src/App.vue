@@ -89,7 +89,6 @@ export default defineComponent({
       this.$nextTick(() => {
         // Now, call renderAll() after the visibility updates are done
         this.canvas?.renderAll();
-        console.log("renderAll")
       });
     },
   },
