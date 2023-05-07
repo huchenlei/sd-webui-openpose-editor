@@ -98,7 +98,7 @@ export default defineComponent({
       const allKeypoints: OpenposeKeypoint2D[] = [];
       activePanelIndicies.forEach(i => {
         const person = this.people[parseInt(i)];
-        allKeypoints.push(...person.body.keypoints);
+        allKeypoints.push(...person.allKeypoints());
       });
       const activeSelection = new fabric.ActiveSelection(
           allKeypoints,
