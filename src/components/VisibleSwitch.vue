@@ -15,6 +15,7 @@ export default {
       },
       set(value: boolean) {
         this.$emit('update:modelValue', value);
+        this.$emit('visible-change', value);
       },
     },
   },
