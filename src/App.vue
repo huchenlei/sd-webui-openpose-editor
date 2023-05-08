@@ -262,6 +262,30 @@ export default defineComponent({
       // By default have a example person.
       this.addPerson();
 
+      const selectionHandler = (event: fabric.IEvent<MouseEvent>) => {
+        // Excluding the selection/deselection event of single keypoint,
+        // as they will not create a selection box, and affect the coords
+        // of keypoint.
+        // When selected, coords of keypoint become relative value to the 
+        // selection group center if there are more than 1 point in the 
+        // selection group.
+        if (event.selected) {
+          if (event.selected.length === 1) return;
+
+          event.selected
+            .filter(o => o instanceof OpenposeKeypoint2D)
+            .forEach(p => this.getKeypointProxy(p as OpenposeKeypoint2D).selected_in_group = true);
+        }
+
+        if (event.deselected) {
+          if (event.deselected.length === 1) return;
+
+          event.deselected
+            .filter(o => o instanceof OpenposeKeypoint2D)
+            .forEach(p => this.getKeypointProxy(p as OpenposeKeypoint2D).selected_in_group = false);
+        }
+      }
+
       this.canvas.on('object:moving', event => {
         if (event.target === undefined)
           return;
@@ -282,12 +306,19 @@ export default defineComponent({
         }
         this.canvas?.renderAll();
       });
+
+      this.canvas.on('selection:created', selectionHandler);
+      this.canvas.on('selection:cleared', selectionHandler);
+      this.canvas.on('selection:updated', selectionHandler);
     });
   },
   methods: {
+    getKeypointProxy(keypoint: OpenposeKeypoint2D): UnwrapRef<OpenposeKeypoint2D> {
+      return this.keypointMap.get(keypoint.id)!;
+    },
     updateKeypointProxy(keypoint: OpenposeKeypoint2D) {
-      const proxy = this.keypointMap.get(keypoint.id)!;
-      
+      const proxy = this.getKeypointProxy(keypoint);
+
       proxy.x = keypoint.x;
       proxy.y = keypoint.y;
     },

@@ -15,8 +15,8 @@
                 <VisibleSwitch v-model="keypoint._visible" @visible-change="onVisibleChange" />
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
                 <div class="coords-group">
-                    <a-input-number v-model:value="keypoint.x" addon-before="x" />
-                    <a-input-number v-model:value="keypoint.y" addon-before="y" />
+                    <a-input-number v-model:value="keypoint.x" addon-before="x" :disabled="keypoint.selected_in_group"/>
+                    <a-input-number v-model:value="keypoint.y" addon-before="y" :disabled="keypoint.selected_in_group"/>
                 </div>
             </a-list-item>
         </a-list>

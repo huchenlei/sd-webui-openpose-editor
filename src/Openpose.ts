@@ -8,6 +8,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
     confidence: number;
     name: string;
     connections: Array<OpenposeConnection>;
+    selected_in_group : boolean;
 
     constructor(x: number, y: number, confidence: number, color: string, name: string) {
         super({
@@ -26,6 +27,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.name = name;
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
+        this.selected_in_group = false;
     }
 
     addConnection(connection: OpenposeConnection): void {
