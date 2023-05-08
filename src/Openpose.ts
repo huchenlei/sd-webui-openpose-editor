@@ -20,7 +20,6 @@ class OpenposeKeypoint2D extends fabric.Circle {
             strokeWidth: 1,
             hasControls: false, // Disallow user to scale the keypoint circle.
             hasBorders: false,
-            visible: true,
         });
 
         this.confidence = confidence;
@@ -28,6 +27,8 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
         this.selected_in_group = false;
+
+        this.visible = this.left! > 0 && this.top! > 0;
     }
 
     addConnection(connection: OpenposeConnection): void {
