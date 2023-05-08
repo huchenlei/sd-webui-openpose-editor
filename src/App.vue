@@ -3,7 +3,7 @@ import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
-import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D } from './Openpose';
+import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject } from './Openpose';
 
 interface AppData {
   canvasHeight: number;
@@ -342,13 +342,52 @@ export default defineComponent({
       });
     },
     addDefaultObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
-      if (obj_name == 'left_hand') {
-        person.left_hand = new OpenposeHand(default_left_hand_keypoints);
-      } else if (obj_name == 'right_hand') {
-        person.right_hand = new OpenposeHand(default_right_hand_keypoints);
-      } else if (obj_name == 'face') {
-        person.face = new OpenposeFace(default_face_keypoints);
+      let target: OpenposeObject;
+      switch (obj_name) {
+        case 'left_hand':
+          person.left_hand = new OpenposeHand(default_left_hand_keypoints);
+          target = person.left_hand;
+          break;
+        case 'right_hand':
+          person.right_hand = new OpenposeHand(default_right_hand_keypoints);
+          target = person.right_hand;
+          break;
+        case 'face':
+          person.face = new OpenposeFace(default_face_keypoints);
+          target = person.face;
+          break;
       }
+
+      target.addToCanvas(this.canvas!);
+      target.keypoints.forEach(keypoint => {
+        this.keypointMap.set(keypoint.id, reactive(keypoint));
+      });
+      this.canvas?.renderAll();
+    },
+    removeObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
+      let target: OpenposeObject | undefined;
+      switch (obj_name) {
+        case 'left_hand':
+          target = person.left_hand;
+          person.left_hand = undefined;
+          break;
+        case 'right_hand':
+          target = person.right_hand;
+          person.right_hand = undefined;
+          break;
+        case 'face':
+          target = person.face;
+          person.face = undefined;
+          break;
+      }
+
+      if (!target) return;
+
+      target.removeFromCanvas(this.canvas!);
+      target.keypoints.forEach(keypoint => {
+        this.keypointMap.delete(keypoint.id);
+      });
+      this.canvas?.renderAll();
     },
     resizeCanvas(newWidth: number, newHeight: number) {
       if (!this.canvas)
@@ -422,18 +461,18 @@ export default defineComponent({
             <a-button v-if="person.face === undefined" @click="addDefaultObject(person, 'face')">Add face</a-button>
             <a-collapse>
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
-              :display_name="'Left Hand'" @removeObject="person.left_hand = undefined"
-              @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
+                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')"
+                @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
             </a-collapse>
             <a-collapse>
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
-              :display_name="'Right Hand'" @removeObject="person.right_hand = undefined"
-              @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
+                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')"
+                @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
             </a-collapse>
             <a-collapse>
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
-              @removeObject="person.face = undefined" @keypoint-coords-change="onCoordsChange"
-              @visible-change="onVisibleChange" />
+                @removeObject="removeObject(person, 'face')" @keypoint-coords-change="onCoordsChange"
+                @visible-change="onVisibleChange" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
