@@ -2,7 +2,7 @@
 import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
-import PersonPanel from './components/PersonPanel.vue';
+import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
 import { OpenposePerson, OpenposeBody, OpenposeKeypoint2D } from './Openpose';
 
 interface AppData {
@@ -358,7 +358,7 @@ export default defineComponent({
       keypoint.setCoords();
       this.canvas?.renderAll();
     },
-    onActivePersonPanelChange(activePanelIds: string[]) {
+    onActiveOpenposeObjectPanelChange(activePanelIds: string[]) {
       if (!this.canvas) return;
 
       this.canvas.discardActiveObject();
@@ -381,7 +381,7 @@ export default defineComponent({
   components: {
     PlusSquareOutlined,
     CloseOutlined,
-    PersonPanel,
+    OpenposeObjectPanel,
   }
 });
 </script>
@@ -399,9 +399,16 @@ export default defineComponent({
 
       <plus-square-outlined @click="addPerson" />
       <a-button @click="updateCanvas">Update Canvas</a-button>
-      <a-collapse @change="onActivePersonPanelChange">
-        <PersonPanel v-for="person in people" :person="person" @removePerson="removePerson"
-          @visible-change="onVisibleChange" @keypoint-coords-change="onCoordsChange" :key="person.id" />
+      <a-collapse @change="onActiveOpenposeObjectPanelChange">
+        <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
+          @removeObject="removePerson(person)" @visible-change="onVisibleChange" @keypoint-coords-change="onCoordsChange"
+          :key="person.id">
+          <template #extra-control>
+              <a-button v-if="person.left_hand === undefined">Add left hand</a-button>
+              <a-button v-if="person.right_hand === undefined">Add right hand</a-button>
+              <a-button v-if="person.face === undefined">Add face</a-button>
+          </template>
+        </OpenposeObjectPanel>
       </a-collapse>
     </a-col>
 

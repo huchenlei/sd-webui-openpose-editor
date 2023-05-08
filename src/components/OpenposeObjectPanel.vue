@@ -1,17 +1,13 @@
 <template>
     <a-collapse-panel>
         <template #header>
-            <VisibleSwitch v-model="person.visible" @visible-change="onVisibleChange" />
-            <span :class="{ hidden: !person.visible }">{{ person.name }}</span>
-            <close-outlined @click="removePerson" class="close-icon" />
+            <VisibleSwitch v-model="object.visible" @visible-change="onVisibleChange" />
+            <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
+            <close-outlined @click="removeObject" class="close-icon" />
         </template>
-
-        <a-button v-if="person.left_hand === undefined">Add left hand</a-button>
-        <a-button v-if="person.right_hand === undefined">Add right hand</a-button>
-        <a-button v-if="person.face === undefined">Add face</a-button>
-
+        <slot name="extra-control"></slot>
         <a-list size="small">
-            <a-list-item v-for="keypoint in person.body.keypoints" :key="keypoint.id">
+            <a-list-item v-for="keypoint in object.keypoints" :key="keypoint.id">
                 <VisibleSwitch v-model="keypoint._visible" @visible-change="onVisibleChange" />
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
                 <div class="coords-group">
@@ -26,19 +22,23 @@
 </template>
 
 <script lang="ts">
-import { OpenposeKeypoint2D, OpenposePerson } from '../Openpose';
+import { OpenposeKeypoint2D, OpenposeObject } from '../Openpose';
 import VisibleSwitch from './VisibleSwitch.vue';
 import { CloseOutlined } from '@ant-design/icons-vue';
 
 export default {
     props: {
-        person: {
-            type: OpenposePerson,
+        object: {
+            type: OpenposeObject,
+            required: true,
+        },
+        display_name : {
+            type: String,
             required: true,
         },
     },
     watch: {
-        'person.visible': {
+        'object.visible': {
             handler(newValue) {
                 this.updateKeypointsVisibility(newValue);
             },
@@ -47,15 +47,15 @@ export default {
     },
     methods: {
         updateKeypointsVisibility(visible: boolean) {
-            for (const keypoint of this.person.body.keypoints) {
+            for (const keypoint of this.object.keypoints) {
                 keypoint._visible = visible;
             }
         },
-        removePerson() {
-            this.$emit("removePerson", this.person);
+        removeObject() {
+            this.$emit("removeObject", this.object);
         },
         onVisibleChange(visible: boolean) {
-            // Handle the visibility change for the person
+            // Handle the visibility change for the object
             this.$emit('visible-change', visible);
         },
         onKeypointXChange(x: number, keypoint: OpenposeKeypoint2D) {

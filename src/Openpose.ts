@@ -108,10 +108,12 @@ class OpenposeConnection extends fabric.Line {
 class OpenposeObject {
     keypoints: OpenposeKeypoint2D[];
     connections: OpenposeConnection[];
+    visible: boolean;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
         this.keypoints = keypoints;
         this.connections = connections;
+        this.visible = true;
     }
 
     addToCanvas(canvas: fabric.Canvas) {
