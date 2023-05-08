@@ -355,6 +355,7 @@ export default defineComponent({
     },
     onCoordsChange(keypoint: OpenposeKeypoint2D) {
       keypoint.updateConnections(new fabric.Point(0, 0));
+      keypoint.setCoords();
       this.canvas?.renderAll();
     },
     onActivePersonPanelChange(activePanelIds: string[]) {
