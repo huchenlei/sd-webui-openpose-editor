@@ -459,17 +459,13 @@ export default defineComponent({
             <a-button v-if="person.right_hand === undefined" @click="addDefaultObject(person, 'right_hand')">Add right
               hand</a-button>
             <a-button v-if="person.face === undefined" @click="addDefaultObject(person, 'face')">Add face</a-button>
-            <a-collapse>
+            <a-collapse accordion>
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
                 :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')"
                 @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
-            </a-collapse>
-            <a-collapse>
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
                 :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')"
                 @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
-            </a-collapse>
-            <a-collapse>
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
                 @removeObject="removeObject(person, 'face')" @keypoint-coords-change="onCoordsChange"
                 @visible-change="onVisibleChange" />
