@@ -26,15 +26,36 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.name = name;
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
-        this.selected_in_group = false;        
+        this.selected_in_group = false;
+
+        this.on('scaling', this._maintainConstantRadius.bind(this));
+        this.on('skewing', this._maintainConstantRadius.bind(this));
     }
 
     addConnection(connection: OpenposeConnection): void {
         this.connections.push(connection);
     }
 
-    updateConnections(origin: fabric.Point) {
-        this.connections.forEach(c => c.update(this, origin));
+    updateConnections(transformMatrix: number[]) {
+        if (transformMatrix.length !== 6)
+            throw `Expect transformMatrix of length 6 but get ${transformMatrix}`;
+
+        this.connections.forEach(c => c.update(this, transformMatrix));
+    }
+
+    _set(key: string, value: any): this {
+        if (key === 'scaleX' || key === 'scaleY') {
+            super._set('scaleX', 1);
+            super._set('scaleY', 1);
+        } else {
+            super._set(key, value);
+        }
+        return this;
+    }
+
+    _maintainConstantRadius(): void {
+        this.set('radius', OpenposeKeypoint2D.radius);
+        this.setCoords();
     }
 
     get x(): number {
@@ -89,16 +110,17 @@ class OpenposeConnection extends fabric.Line {
      * Update the connection because the coords of any of the keypoints has 
      * changed. 
      */
-    update(p: OpenposeKeypoint2D, origin: fabric.Point) {
+    update(p: OpenposeKeypoint2D, transformMatrix: number[]) {
+        const globalPoint = fabric.util.transformPoint(new fabric.Point(p.x, p.y) , transformMatrix);
         if (p === this.k1) {
             this.set({
-                x1: this.k1.x + origin.x,
-                y1: this.k1.y + origin.y,
+                x1: globalPoint.x,
+                y1: globalPoint.y,
             } as Partial<this>);
         } else if (p === this.k2) {
             this.set({
-                x2: this.k2.x + origin.x,
-                y2: this.k2.y + origin.y,
+                x2: globalPoint.x,
+                y2: globalPoint.y,
             } as Partial<this>);
         }
     }

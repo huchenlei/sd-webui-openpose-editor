@@ -242,6 +242,9 @@ const default_right_hand_keypoints: [number, number, number][] = [
 
 const default_face_keypoints: [number, number, number][] = [];
 
+// identity_metrics * point == point.
+const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
+
 export default defineComponent({
   data(): AppData {
     return {
@@ -288,27 +291,29 @@ export default defineComponent({
         }
       }
 
-      this.canvas.on('object:moving', event => {
+      const keypointMoveHandler = (event: fabric.IEvent<MouseEvent>) => {
         if (event.target === undefined)
           return;
 
         const target = event.target;
         if (target instanceof fabric.ActiveSelection) {
           // Group of points movement.
-          const groupCenter = target.getCenterPoint();
+          const t = target.calcTransformMatrix();
           target.forEachObject(obj => {
             if (obj instanceof OpenposeKeypoint2D) {
-              obj.updateConnections(groupCenter);
+              obj.updateConnections(t);
             }
           });
         } else if (target instanceof OpenposeKeypoint2D) {
           // Single keypoint movement.
-          target.updateConnections(new fabric.Point(0, 0));
+          target.updateConnections(IDENTITY_MATRIX);
           this.updateKeypointProxy(target);
         }
         this.canvas?.renderAll();
-      });
+      };
 
+      this.canvas.on('object:moving', keypointMoveHandler);
+      this.canvas.on('object:scaling', keypointMoveHandler);
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
@@ -404,7 +409,7 @@ export default defineComponent({
       });
     },
     onCoordsChange(keypoint: OpenposeKeypoint2D) {
-      keypoint.updateConnections(new fabric.Point(0, 0));
+      keypoint.updateConnections(IDENTITY_MATRIX);
       keypoint.setCoords();
       this.canvas?.renderAll();
     },
