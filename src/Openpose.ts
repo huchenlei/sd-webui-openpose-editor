@@ -8,7 +8,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
     confidence: number;
     name: string;
     connections: Array<OpenposeConnection>;
-    selected_in_group : boolean;
+    selected_in_group: boolean;
 
     constructor(x: number, y: number, confidence: number, color: string, name: string) {
         super({
@@ -259,14 +259,25 @@ class OpenposeHand extends OpenposeObject {
         [0, 17], [17, 18], [18, 19], [19, 20],
     ];
 
+    static keypoint_names: string[] = [
+        'wrist joint',
+        ..._.range(4).map(i => `Thumb-${i}`),
+        ..._.range(4).map(i => `Index Finger-${i}`),
+        ..._.range(4).map(i => `Middle Finger-${i}`),
+        ..._.range(4).map(i => `Ring Finger-${i}`),
+        ..._.range(4).map(i => `Little Finger-${i}`),
+    ];
+
     constructor(rawKeypoints: [number, number, number][]) {
-        const keypoints = rawKeypoints.map((rawKeypoint, i) => new OpenposeKeypoint2D(
-            rawKeypoint[0],
-            rawKeypoint[1],
-            rawKeypoint[2],
-            formatColor([0, 0, 255]), // All hand keypoints are marked blue.
-            `HandKeypoint-${i}`
-        ));
+        console.log(OpenposeHand.keypoint_names);
+        const keypoints = _.zipWith(rawKeypoints, OpenposeHand.keypoint_names,
+            (rawKeypoint: [number, number, number], name: string) => new OpenposeKeypoint2D(
+                rawKeypoint[0],
+                rawKeypoint[1],
+                rawKeypoint[2],
+                formatColor([0, 0, 255]), // All hand keypoints are marked blue.
+                name
+            ));
 
         const connections = OpenposeHand.keypoint_connections.map((connection, i) => new OpenposeConnection(
             keypoints[connection[0]],
