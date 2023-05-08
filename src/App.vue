@@ -249,7 +249,7 @@ export default defineComponent({
       hideInvisibleKeypoints: false,
       people: [],
       canvas: null,
-      keypointMap: new Map<string, UnwrapRef<OpenposeKeypoint2D>>(),
+      keypointMap: new Map<number, UnwrapRef<OpenposeKeypoint2D>>(),
     }
   },
   mounted() {
