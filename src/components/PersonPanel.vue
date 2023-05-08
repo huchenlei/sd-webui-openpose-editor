@@ -15,8 +15,10 @@
                 <VisibleSwitch v-model="keypoint._visible" @visible-change="onVisibleChange" />
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
                 <div class="coords-group">
-                    <a-input-number v-model:value="keypoint.x" addon-before="x" :disabled="keypoint.selected_in_group"/>
-                    <a-input-number v-model:value="keypoint.y" addon-before="y" :disabled="keypoint.selected_in_group"/>
+                    <a-input-number :value="keypoint.x" @change="onKeypointXChange($event, keypoint)" addon-before="x"
+                        :disabled="keypoint.selected_in_group" />
+                    <a-input-number :value="keypoint.y" @change="onKeypointYChange($event, keypoint)" addon-before="y"
+                        :disabled="keypoint.selected_in_group" />
                 </div>
             </a-list-item>
         </a-list>
@@ -55,7 +57,15 @@ export default {
         onVisibleChange(visible: boolean) {
             // Handle the visibility change for the person
             this.$emit('visible-change', visible);
-        }
+        },
+        onKeypointXChange(x: number, keypoint: OpenposeKeypoint2D) {
+            keypoint.x = x;
+            this.$emit('keypoint-coords-change', keypoint);
+        },
+        onKeypointYChange(y: number, keypoint: OpenposeKeypoint2D) {
+            keypoint.y = y;
+            this.$emit('keypoint-coords-change', keypoint);
+        },
     },
     components: {
         VisibleSwitch,

@@ -296,12 +296,12 @@ export default defineComponent({
           const groupCenter = target.getCenterPoint();
           target.forEachObject(obj => {
             if (obj instanceof OpenposeKeypoint2D) {
-              obj.connections.forEach(c => c.update(obj, groupCenter));
+              obj.updateConnections(groupCenter);
             }
           });
         } else if (target instanceof OpenposeKeypoint2D) {
           // Single keypoint movement.
-          target.connections.forEach(c => c.update(target, new fabric.Point(0, 0)));
+          target.updateConnections(new fabric.Point(0, 0));
           this.updateKeypointProxy(target);
         }
         this.canvas?.renderAll();
@@ -353,6 +353,10 @@ export default defineComponent({
         this.canvas?.renderAll();
       });
     },
+    onCoordsChange(keypoint: OpenposeKeypoint2D) {
+      keypoint.updateConnections(new fabric.Point(0, 0));
+      this.canvas?.renderAll();
+    },
     onActivePersonPanelChange(activePanelIds: string[]) {
       if (!this.canvas) return;
 
@@ -396,7 +400,7 @@ export default defineComponent({
       <a-button @click="updateCanvas">Update Canvas</a-button>
       <a-collapse @change="onActivePersonPanelChange">
         <PersonPanel v-for="person in people" :person="person" @removePerson="removePerson"
-          @visible-change="onVisibleChange" :key="person.id" />
+          @visible-change="onVisibleChange" @keypoint-coords-change="onCoordsChange" :key="person.id" />
       </a-collapse>
     </a-col>
 

@@ -34,6 +34,10 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.connections.push(connection);
     }
 
+    updateConnections(origin: fabric.Point) {
+        this.connections.forEach(c => c.update(this, origin));
+    }
+
     get x(): number {
         return this.left! + OpenposeKeypoint2D.radius;
     }
