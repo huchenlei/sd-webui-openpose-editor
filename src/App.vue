@@ -322,13 +322,13 @@ export default defineComponent({
         this.canvas?.renderAll();
       });
     },
-    onActivePersonPanelChange(activePanelIndicies: string[]) {
+    onActivePersonPanelChange(activePanelIds: string[]) {
       if (!this.canvas) return;
 
       this.canvas.discardActiveObject();
       const allKeypoints: OpenposeKeypoint2D[] = [];
-      activePanelIndicies.forEach(i => {
-        const person = this.people[parseInt(i)];
+      activePanelIds.forEach(id => {
+        const person = this.people.filter(p => p.id == parseInt(id))[0];
         allKeypoints.push(...person.allKeypoints());
       });
       const activeSelection = new fabric.ActiveSelection(
