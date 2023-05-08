@@ -314,6 +314,7 @@ export default defineComponent({
 
       this.canvas.on('object:moving', keypointMoveHandler);
       this.canvas.on('object:scaling', keypointMoveHandler);
+      this.canvas.on('object:rotating', keypointMoveHandler);
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
