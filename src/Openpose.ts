@@ -26,9 +26,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.name = name;
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
-        this.selected_in_group = false;
-
-        this.visible = this.left! > 0 && this.top! > 0;
+        this.selected_in_group = false;        
     }
 
     addConnection(connection: OpenposeConnection): void {
@@ -62,7 +60,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
     set _visible(visible: boolean) {
         this.visible = visible;
         this.connections.forEach(c => {
-            c.visible = visible;
+            c.updateVisibility();
         });
     }
 };
@@ -104,6 +102,10 @@ class OpenposeConnection extends fabric.Line {
             } as Partial<this>);
         }
     }
+
+    updateVisibility() {
+        this.visible = this.k1._visible && this.k2._visible;
+    }
 };
 
 class OpenposeObject {
@@ -115,6 +117,11 @@ class OpenposeObject {
         this.keypoints = keypoints;
         this.connections = connections;
         this.visible = true;
+
+        // Negative x, y means invalid keypoint.
+        this.keypoints.forEach(keypoint => {
+            keypoint._visible = keypoint.x >= 0 && keypoint.y >= 0;
+        });
     }
 
     addToCanvas(canvas: fabric.Canvas) {
@@ -269,7 +276,6 @@ class OpenposeHand extends OpenposeObject {
     ];
 
     constructor(rawKeypoints: [number, number, number][]) {
-        console.log(OpenposeHand.keypoint_names);
         const keypoints = _.zipWith(rawKeypoints, OpenposeHand.keypoint_names,
             (rawKeypoint: [number, number, number], name: string) => new OpenposeKeypoint2D(
                 rawKeypoint[0],

@@ -47,8 +47,16 @@ export default {
     },
     methods: {
         updateKeypointsVisibility(visible: boolean) {
+            let all_invisible = true;
             for (const keypoint of this.object.keypoints) {
-                keypoint._visible = visible;
+                if (keypoint._visible) all_invisible = false;
+                keypoint._visible &&= visible;
+            }
+            
+            // Only when all keypoints invisible, we want to turn the them
+            // all to visible.
+            if (visible && all_invisible) {
+                this.object.keypoints.forEach(p => p._visible = true);
             }
         },
         removeObject() {
