@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type App } from 'vue';
+import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
 import PersonPanel from './components/PersonPanel.vue';
@@ -12,6 +12,7 @@ interface AppData {
   personName: string;
   hideInvisibleKeypoints: boolean;
   people: OpenposePerson[];
+  keypointMap: Map<number, UnwrapRef<OpenposeKeypoint2D>>,
   canvas: fabric.Canvas | null;
 };
 
@@ -246,10 +247,9 @@ export default defineComponent({
       canvasWidth: 512,
       personName: '',
       hideInvisibleKeypoints: false,
-      people: [
-        new OpenposePerson('Example Person', new OpenposeBody(default_body_keypoints)),
-      ],
+      people: [],
       canvas: null,
+      keypointMap: new Map<string, UnwrapRef<OpenposeKeypoint2D>>(),
     }
   },
   mounted() {
@@ -258,9 +258,9 @@ export default defineComponent({
         backgroundColor: '#000',
         preserveObjectStacking: true,
       });
-
-      this.people.forEach(p => p.addToCanvas(this.canvas!));
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+      // By default have a example person.
+      this.addPerson();
 
       this.canvas.on('object:moving', event => {
         if (event.target === undefined)
@@ -278,20 +278,35 @@ export default defineComponent({
         } else if (target instanceof OpenposeKeypoint2D) {
           // Single keypoint movement.
           target.connections.forEach(c => c.update(target, new fabric.Point(0, 0)));
+          this.updateKeypointProxy(target);
         }
         this.canvas?.renderAll();
       });
     });
   },
   methods: {
+    updateKeypointProxy(keypoint: OpenposeKeypoint2D) {
+      const proxy = this.keypointMap.get(keypoint.id)!;
+      
+      proxy.x = keypoint.x;
+      proxy.y = keypoint.y;
+    },
     addPerson() {
       const newPerson = new OpenposePerson(null, new OpenposeBody(default_body_keypoints));
       this.people.push(newPerson);
       newPerson.addToCanvas(this.canvas!);
+      // Add the reactive keypoints to the keypointMap
+      newPerson.allKeypoints().forEach((keypoint) => {
+        this.keypointMap.set(keypoint.id, reactive(keypoint));
+      });
     },
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
       person.removeFromCanvas(this.canvas!);
+      // Remove the reactive keypoints from the keypointMap
+      person.allKeypoints().forEach((keypoint) => {
+        this.keypointMap.delete(keypoint.id);
+      });
     },
     resizeCanvas(newWidth: number, newHeight: number) {
       if (!this.canvas)
