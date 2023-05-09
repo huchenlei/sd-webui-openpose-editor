@@ -28,3 +28,9 @@
     object-fit: cover; 
     margin-right: 8px;
 }
+
+.uploaded-file-item > div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}

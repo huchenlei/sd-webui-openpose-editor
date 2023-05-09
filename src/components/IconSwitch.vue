@@ -26,14 +26,14 @@ export default {
 </script>
 
 <template>
-    <div @click.stop="toggleState" class="visible-switch">
+    <div @click.stop="toggleState" class="icon-switch">
         <slot name="enable-state" v-if="state"></slot>
         <slot name="disable-state" v-else></slot>
     </div>
 </template>
 
 <style scoped>
-.visible-switch {
+.icon-switch {
     cursor: pointer;
 }
 </style>

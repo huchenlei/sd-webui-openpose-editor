@@ -1,30 +1,29 @@
 <script lang="ts">
-import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
+import { LockOutlined, UnlockOutlined } from '@ant-design/icons-vue';
 import IconSwitch from './IconSwitch.vue';
 
 export default {
   props: {
-    visible: {
+    locked: {
       type: Boolean,
       required: true,
     },
   },
   components: {
-    EyeOutlined, EyeInvisibleOutlined, IconSwitch,
+    LockOutlined, UnlockOutlined, IconSwitch,
   },
 };
 </script>
 
 <template>
-    <div class="visible-switch">
-        <IconSwitch :model-value="visible" @update:modelValue="$emit('update:visible', $event)">
+    <div>
+        <IconSwitch :model-value="locked" @update:modelValue="$emit('update:locked', $event)">
           <template #enable-state>
-            <eye-outlined/>
+            <lock-outlined></lock-outlined>
           </template>
           <template #disable-state>
-            <eye-invisible-outlined/>
+            <unlock-outlined></unlock-outlined>
           </template>
         </IconSwitch>
     </div>
 </template>
-

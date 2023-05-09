@@ -5,6 +5,7 @@ import { PlusSquareOutlined, CloseOutlined, UploadOutlined } from '@ant-design/i
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
 import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject } from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
+import LockSwitch from './components/LockSwitch.vue';
 
 /* 
 Dev TODO List:
@@ -12,7 +13,6 @@ Dev TODO List:
 - Attach hand/face to correct location when added
 - bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
 - Auto-zoom in/out and lock zoom level when face/hand are selected
-- Background image upload
 - JSON file upload.
 - Read JSON/background file from POST request params
 - Save as JSON
@@ -20,6 +20,10 @@ Dev TODO List:
 - Mount a get/post path on WebUI so that the plugin is accessible
 - [Optional]: make a extension tab to in WebUI to host the iframe
  */
+
+interface LockableUploadFile extends UploadFile {
+  locked: boolean;
+};
 
 interface AppData {
   canvasHeight: number;
@@ -32,7 +36,7 @@ interface AppData {
   canvas: fabric.Canvas | null;
 
   // Fields for uploaded background images.
-  uploadedImageList: UploadFile[];
+  uploadedImageList: LockableUploadFile[];
   canvasImageMap: Map<string, fabric.Image>;
 };
 
@@ -431,6 +435,26 @@ export default defineComponent({
         this.canvas?.renderAll();
       });
     },
+    onLockedChange(file: LockableUploadFile, locked: boolean) {
+      const img = this.canvasImageMap.get(file.uid);
+      if (!img) return;
+
+      if (locked) {
+        if (this.canvas?.getActiveObjects().includes(img)) {
+          this.canvas.discardActiveObject();
+        }
+        img.set({
+          selectable: false,
+          evented: false,
+        });
+      } else {
+        img.set({
+          selectable: true,
+          evented: true,
+        });
+      }
+      this.canvas?.renderAll();
+    },
     onCoordsChange(keypoint: OpenposeKeypoint2D) {
       keypoint.updateConnections(IDENTITY_MATRIX);
       keypoint.setCoords();
@@ -470,6 +494,7 @@ export default defineComponent({
           this.canvas?.renderAll();
 
           const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];
+          uploadFile.locked = false;
           this.canvasImageMap.set(uploadFile.uid, img);
         });
       };
@@ -493,6 +518,7 @@ export default defineComponent({
     CloseOutlined,
     UploadOutlined,
     OpenposeObjectPanel,
+    LockSwitch,
   }
 });
 </script>
@@ -508,7 +534,7 @@ export default defineComponent({
         <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
       </div>
 
-      
+
       <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
         :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
         <a-button>
@@ -517,14 +543,15 @@ export default defineComponent({
         </a-button>
         <template #itemRender="{ file, actions }">
           <a-card class="uploaded-file-item">
+            <LockSwitch v-model:locked="file.locked" @update:locked="onLockedChange(file, $event)" />
             <img v-if="isImage(file)" :src="file.thumbUrl || file.url" :alt="file.name" class="image-thumbnail" />
             <span>{{ file.name }}</span>
-            <close-outlined @click="actions.remove" class="close-icon"/>
+            <close-outlined @click="actions.remove" class="close-icon" />
           </a-card>
         </template>
       </a-upload>
       <a-button @click="addPerson">
-        <plus-square-outlined/>
+        <plus-square-outlined />
         Add Person
       </a-button>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
@@ -556,7 +583,7 @@ export default defineComponent({
     <a-col :span="16">
       <canvas ref="editorCanvas"></canvas>
     </a-col>
-  </a-row>    
+  </a-row>
 </template>
 
 <style>
