@@ -1,9 +1,9 @@
 <script lang="ts">
 import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
-import { PlusSquareOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons-vue';
+import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
-import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject } from './Openpose';
+import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject, type IOpenposeJson } from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
 import _ from 'lodash';
@@ -15,7 +15,6 @@ Dev TODO List:
 - bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
 - Auto-zoom in/out and lock zoom level when face/hand are selected
 - Read JSON/background file from POST request params
-- Save as JSON
 - post result back to parent frame
 - Mount a get/post path on WebUI so that the plugin is accessible
 - [Optional]: make a extension tab to in WebUI to host the iframe
@@ -23,19 +22,6 @@ Dev TODO List:
 
 interface LockableUploadFile extends UploadFile {
   locked: boolean;
-};
-
-interface IOpenposePersonJson {
-  pose_keypoints_2d: number[],
-  hand_right_keypoints_2d: number[] | null,
-  hand_left_keypoints_2d: number[] | null,
-  face_keypoints_2d: number[] | null,
-};
-
-interface IOpenposeJson {
-  canvas_width: number;
-  canvas_height: number;
-  people: IOpenposePersonJson[];
 };
 
 interface AppData {
@@ -549,11 +535,11 @@ export default defineComponent({
         poseJson.people.forEach(personJson => {
           this.addPerson(new OpenposePerson(null,
             new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
-            personJson.hand_left_keypoints_2d ? 
+            personJson.hand_left_keypoints_2d ?
               new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-            personJson.hand_right_keypoints_2d ? 
+            personJson.hand_right_keypoints_2d ?
               new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-            personJson.face_keypoints_2d ? 
+            personJson.face_keypoints_2d ?
               new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
           ));
         });
@@ -562,11 +548,27 @@ export default defineComponent({
       reader.readAsText(file);
       return false;
     },
+    downloadCanvasAsJson() {
+      const data = {
+        people: this.people.map(person => person.toJson()),
+        canvas_width: this.canvasWidth,
+        canvas_height: this.canvasHeight,
+      } as IOpenposeJson;
+
+      const json = JSON.stringify(data);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'pose.json';
+      link.click();
+    }
   },
   components: {
     PlusSquareOutlined,
     CloseOutlined,
     UploadOutlined,
+    DownloadOutlined,
     OpenposeObjectPanel,
     LockSwitch,
   }
@@ -617,6 +619,10 @@ export default defineComponent({
           Upload JSON
         </a-button>
       </a-upload>
+      <a-button @click="downloadCanvasAsJson">
+        <download-outlined></download-outlined>
+        Download JSON
+      </a-button>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" @update:visible="onVisibleChange" @keypoint-coords-change="onCoordsChange"

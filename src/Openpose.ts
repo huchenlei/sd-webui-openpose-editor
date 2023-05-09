@@ -111,7 +111,7 @@ class OpenposeConnection extends fabric.Line {
      * changed. 
      */
     update(p: OpenposeKeypoint2D, transformMatrix: number[]) {
-        const globalPoint = fabric.util.transformPoint(new fabric.Point(p.x, p.y) , transformMatrix);
+        const globalPoint = fabric.util.transformPoint(new fabric.Point(p.x, p.y), transformMatrix);
         if (p === this.k1) {
             this.set({
                 x1: globalPoint.x,
@@ -156,6 +156,9 @@ class OpenposeObject {
         this.connections.forEach(c => canvas.remove(c));
     }
 
+    serialize(): number[] {
+        return _.flatten(this.keypoints.map(p => p._visible ? [p.x, p.y, 1.0] : [0.0, 0.0, 0.0]));
+    }
 };
 
 function formatColor(color: [number, number, number], opacity: number = 1.0): string {
@@ -366,6 +369,28 @@ class OpenposePerson {
         return _.flatten([this.body, this.left_hand, this.right_hand, this.face]
             .map(o => o === undefined ? [] : o.keypoints));
     }
+
+    toJson(): IOpenposePersonJson {
+        return {
+            pose_keypoints_2d: this.body.serialize(),
+            hand_right_keypoints_2d: this.right_hand?.serialize(),
+            hand_left_keypoints_2d: this.left_hand?.serialize(),
+            face_keypoints_2d: this.face?.serialize(),
+        } as IOpenposePersonJson;
+    }
+};
+
+interface IOpenposePersonJson {
+    pose_keypoints_2d: number[],
+    hand_right_keypoints_2d: number[] | null,
+    hand_left_keypoints_2d: number[] | null,
+    face_keypoints_2d: number[] | null,
+};
+
+interface IOpenposeJson {
+    canvas_width: number;
+    canvas_height: number;
+    people: IOpenposePersonJson[];
 };
 
 export {
@@ -376,4 +401,8 @@ export {
     OpenposePerson,
     OpenposeHand,
     OpenposeFace,
+};
+
+export type {
+    IOpenposeJson
 };
