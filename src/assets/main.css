@@ -14,7 +14,7 @@
 }
 
 /* Right align last item in the flex container with `flex-start` */
-.close-icon, .coords-group {
+.close-icon, .coords-group, .scale-ratio-input {
     margin-left: auto;
 }
 

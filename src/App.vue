@@ -22,6 +22,7 @@ Dev TODO List:
 
 interface LockableUploadFile extends UploadFile {
   locked: boolean;
+  scale: number;
 };
 
 interface AppData {
@@ -450,11 +451,15 @@ export default defineComponent({
         img.set({
           selectable: false,
           evented: false,
+          hasControls: false,
+          hasBorders: false,
         });
       } else {
         img.set({
           selectable: true,
           evented: true,
+          hasControls: true,
+          hasBorders: true,
         });
       }
       this.canvas?.renderAll();
@@ -490,6 +495,10 @@ export default defineComponent({
             scaleX: 1.0,
             scaleY: 1.0,
             opacity: 0.5,
+            hasControls: true,
+            hasBorders: true,
+            lockScalingX: false,
+            lockScalingY: false,
           });
 
           this.canvas?.add(img);
@@ -499,6 +508,7 @@ export default defineComponent({
 
           const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];
           uploadFile.locked = false;
+          uploadFile.scale = 1.0;
           this.canvasImageMap.set(uploadFile.uid, img);
         });
       };
@@ -514,6 +524,17 @@ export default defineComponent({
       if (!this.canvasImageMap.has(image.uid)) return;
 
       this.canvas?.remove(this.canvasImageMap.get(image.uid)!);
+      this.canvas?.renderAll();
+    },
+    scaleImage(image: LockableUploadFile, scale: number) {
+      if (!this.canvasImageMap.has(image.uid)) return;
+
+      const img = this.canvasImageMap.get(image.uid)!;
+      img.set({
+        scaleX: scale,
+        scaleY: scale,
+      });
+
       this.canvas?.renderAll();
     },
     handleBeforeUploadJson(file: Blob) {
@@ -566,7 +587,7 @@ export default defineComponent({
     downloadCanvasAsImage() {
       if (!this.canvas) return;
       // Get the data URL of the canvas as a PNG image
-      const dataUrl = this.canvas.toDataURL({format: 'image/png'});
+      const dataUrl = this.canvas.toDataURL({ format: 'image/png' });
       // Create an img element with the data URL
       const img = document.createElement('img');
       img.src = dataUrl;
@@ -616,6 +637,8 @@ export default defineComponent({
             <LockSwitch v-model:locked="file.locked" @update:locked="onLockedChange(file, $event)" />
             <img v-if="isImage(file)" :src="file.thumbUrl || file.url" :alt="file.name" class="image-thumbnail" />
             <span>{{ file.name }}</span>
+            <a-input-number class="scale-ratio-input" addon-before="scale ratio" @update:value="scaleImage(file, $event)"
+              :min="0" v-model:value="file.scale" />
             <close-outlined @click="actions.remove" class="close-icon" />
           </a-card>
         </template>
