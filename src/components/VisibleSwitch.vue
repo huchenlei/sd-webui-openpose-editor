@@ -1,39 +1,30 @@
 <script lang="ts">
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
+import IconSwitch from './IconSwitch.vue';
 
 export default {
   props: {
-    modelValue: {
+    visible: {
       type: Boolean,
       required: true,
     },
   },
-  computed: {
-    state: {
-      get() {
-        return this.modelValue;
-      },
-      set(value: boolean) {
-        this.$emit('update:modelValue', value);
-        this.$emit('visible-change', value);
-      },
-    },
-  },
-  methods: {
-    toggleState() {
-      this.state = !this.state;
-    },
-  },
   components: {
-    EyeOutlined, EyeInvisibleOutlined,
-  }
+    EyeOutlined, EyeInvisibleOutlined, IconSwitch,
+  },
 };
 </script>
 
 <template>
-    <div @click.stop="toggleState" class="visible-switch">
-        <eye-outlined v-if="state" />
-        <eye-invisible-outlined v-else />
+    <div class="visible-switch">
+        <IconSwitch :model-value="visible" @update:modelValue="$emit('update:visible', $event)">
+          <template #enable-state>
+            <eye-outlined/>
+          </template>
+          <template #disable-state>
+            <eye-invisible-outlined/>
+          </template>
+        </IconSwitch>
     </div>
 </template>
 

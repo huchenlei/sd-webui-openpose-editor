@@ -508,8 +508,7 @@ export default defineComponent({
         <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
       </div>
 
-      <plus-square-outlined @click="addPerson" />
-
+      
       <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
         :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
         <a-button>
@@ -524,10 +523,13 @@ export default defineComponent({
           </a-card>
         </template>
       </a-upload>
-
+      <a-button @click="addPerson">
+        <plus-square-outlined/>
+        Add Person
+      </a-button>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
-          @removeObject="removePerson(person)" @visible-change="onVisibleChange" @keypoint-coords-change="onCoordsChange"
+          @removeObject="removePerson(person)" @update:visible="onVisibleChange" @keypoint-coords-change="onCoordsChange"
           :key="person.id">
           <template #extra-control>
             <a-button v-if="person.left_hand === undefined" @click="addDefaultObject(person, 'left_hand')">Add left
@@ -538,13 +540,13 @@ export default defineComponent({
             <a-collapse accordion>
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
                 :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')"
-                @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
+                @keypoint-coords-change="onCoordsChange" @update:visible="onVisibleChange" />
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
                 :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')"
-                @keypoint-coords-change="onCoordsChange" @visible-change="onVisibleChange" />
+                @keypoint-coords-change="onCoordsChange" @update:visible="onVisibleChange" />
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
                 @removeObject="removeObject(person, 'face')" @keypoint-coords-change="onCoordsChange"
-                @visible-change="onVisibleChange" />
+                @update:visible="onVisibleChange" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
@@ -554,7 +556,7 @@ export default defineComponent({
     <a-col :span="16">
       <canvas ref="editorCanvas"></canvas>
     </a-col>
-  </a-row>
+  </a-row>    
 </template>
 
 <style>
