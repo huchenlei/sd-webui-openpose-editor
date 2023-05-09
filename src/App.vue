@@ -534,12 +534,11 @@ export default defineComponent({
         <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
       </div>
 
-
       <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
         :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
         <a-button>
           <upload-outlined></upload-outlined>
-          upload image
+          Upload Image
         </a-button>
         <template #itemRender="{ file, actions }">
           <a-card class="uploaded-file-item">
