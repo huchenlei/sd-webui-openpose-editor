@@ -1,9 +1,25 @@
 <script lang="ts">
 import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
-import { PlusSquareOutlined, CloseOutlined } from '@ant-design/icons-vue';
+import { PlusSquareOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
 import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject } from './Openpose';
+import type { UploadFile } from 'ant-design-vue';
+
+/* 
+Dev TODO List:
+- Zoom in/out ability
+- Attach hand/face to correct location when added
+- bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
+- Auto-zoom in/out and lock zoom level when face/hand are selected
+- Background image upload
+- JSON file upload.
+- Read JSON/background file from POST request params
+- Save as JSON
+- post result back to parent frame
+- Mount a get/post path on WebUI so that the plugin is accessible
+- [Optional]: make a extension tab to in WebUI to host the iframe
+ */
 
 interface AppData {
   canvasHeight: number;
@@ -14,6 +30,10 @@ interface AppData {
   people: OpenposePerson[];
   keypointMap: Map<number, UnwrapRef<OpenposeKeypoint2D>>,
   canvas: fabric.Canvas | null;
+
+  // Fields for uploaded background images.
+  uploadedImageList: UploadFile[];
+  canvasImageMap: Map<string, fabric.Image>;
 };
 
 const default_body_keypoints: [number, number, number][] = [
@@ -255,7 +275,9 @@ export default defineComponent({
       people: [],
       canvas: null,
       keypointMap: new Map<number, UnwrapRef<OpenposeKeypoint2D>>(),
-    }
+      uploadedImageList: [],
+      canvasImageMap: new Map<string, fabric.Image>(),
+    };
   },
   mounted() {
     this.$nextTick(() => {
@@ -430,13 +452,46 @@ export default defineComponent({
       this.canvas.setActiveObject(activeSelection);
       this.canvas.renderAll();
     },
-    updateCanvas() {
+    handleBeforeUploadImage(file: Blob) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        fabric.Image.fromURL(e.target!.result! as string, (img) => {
+          img.set({
+            left: 0,
+            top: 0,
+            scaleX: 1.0,
+            scaleY: 1.0,
+            opacity: 0.5,
+          });
+
+          this.canvas?.add(img);
+          // Image should not block skeleton.
+          this.canvas?.moveTo(img, 0);
+          this.canvas?.renderAll();
+
+          const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];
+          this.canvasImageMap.set(uploadFile.uid, img);
+        });
+      };
+      reader.readAsDataURL(file);
+
+      // Return false to prevent the default upload behavior
+      return false;
+    },
+    isImage(file: UploadFile) {
+      return /\.(jpeg|jpg|gif|png|bmp)$/i.test(file.name);
+    },
+    handleRemoveImage(image: UploadFile) {
+      if (!this.canvasImageMap.has(image.uid)) return;
+
+      this.canvas?.remove(this.canvasImageMap.get(image.uid)!);
       this.canvas?.renderAll();
     },
   },
   components: {
     PlusSquareOutlined,
     CloseOutlined,
+    UploadOutlined,
     OpenposeObjectPanel,
   }
 });
@@ -454,7 +509,22 @@ export default defineComponent({
       </div>
 
       <plus-square-outlined @click="addPerson" />
-      <a-button @click="updateCanvas">Update Canvas</a-button>
+
+      <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
+        :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
+        <a-button>
+          <upload-outlined></upload-outlined>
+          upload image
+        </a-button>
+        <template #itemRender="{ file, actions }">
+          <a-card class="uploaded-file-item">
+            <img v-if="isImage(file)" :src="file.thumbUrl || file.url" :alt="file.name" class="image-thumbnail" />
+            <span>{{ file.name }}</span>
+            <close-outlined @click="actions.remove" class="close-icon"/>
+          </a-card>
+        </template>
+      </a-upload>
+
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" @visible-change="onVisibleChange" @keypoint-coords-change="onCoordsChange"
