@@ -142,7 +142,7 @@ class OpenposeObject {
 
         // Negative x, y means invalid keypoint.
         this.keypoints.forEach(keypoint => {
-            keypoint._visible = keypoint.x >= 0 && keypoint.y >= 0;
+            keypoint._visible = keypoint.x >= 0 && keypoint.y >= 0 && keypoint.confidence === 1.0;
         });
     }
 

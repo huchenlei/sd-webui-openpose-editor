@@ -6,6 +6,7 @@ import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
 import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject } from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
+import _ from 'lodash';
 
 /* 
 Dev TODO List:
@@ -13,7 +14,6 @@ Dev TODO List:
 - Attach hand/face to correct location when added
 - bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
 - Auto-zoom in/out and lock zoom level when face/hand are selected
-- JSON file upload.
 - Read JSON/background file from POST request params
 - Save as JSON
 - post result back to parent frame
@@ -23,6 +23,19 @@ Dev TODO List:
 
 interface LockableUploadFile extends UploadFile {
   locked: boolean;
+};
+
+interface IOpenposePersonJson {
+  pose_keypoints_2d: number[],
+  hand_right_keypoints_2d: number[] | null,
+  hand_left_keypoints_2d: number[] | null,
+  face_keypoints_2d: number[] | null,
+};
+
+interface IOpenposeJson {
+  canvas_width: number;
+  canvas_height: number;
+  people: IOpenposePersonJson[];
 };
 
 interface AppData {
@@ -291,7 +304,7 @@ export default defineComponent({
       });
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
       // By default have a example person.
-      this.addPerson();
+      this.addDefaultPerson();
 
       const selectionHandler = (event: fabric.IEvent<MouseEvent>) => {
         // Excluding the selection/deselection event of single keypoint,
@@ -356,14 +369,18 @@ export default defineComponent({
       proxy.x = keypoint.x;
       proxy.y = keypoint.y;
     },
-    addPerson() {
-      const newPerson = new OpenposePerson(null, new OpenposeBody(default_body_keypoints));
+    addPerson(newPerson: OpenposePerson) {
       this.people.push(newPerson);
       newPerson.addToCanvas(this.canvas!);
       // Add the reactive keypoints to the keypointMap
       newPerson.allKeypoints().forEach((keypoint) => {
         this.keypointMap.set(keypoint.id, reactive(keypoint));
       });
+      this.canvas?.renderAll();
+    },
+    addDefaultPerson() {
+      const newPerson = new OpenposePerson(null, new OpenposeBody(default_body_keypoints));
+      this.addPerson(newPerson);
     },
     removePerson(person: OpenposePerson) {
       this.people = this.people.filter(p => p !== person);
@@ -372,6 +389,7 @@ export default defineComponent({
       person.allKeypoints().forEach((keypoint) => {
         this.keypointMap.delete(keypoint.id);
       });
+      this.canvas?.renderAll();
     },
     addDefaultObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
       let target: OpenposeObject;
@@ -512,6 +530,38 @@ export default defineComponent({
       this.canvas?.remove(this.canvasImageMap.get(image.uid)!);
       this.canvas?.renderAll();
     },
+    handleBeforeUploadJson(file: Blob) {
+      function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
+        const points = _.chunk(nums, 3) as [number, number, number][];
+        return points.map(p => [p[0] * canvasWidth, p[1] * canvasHeight, p[2]]);
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
+        const canvasHeight = poseJson.canvas_height;
+        const canvasWidth = poseJson.canvas_width;
+
+        this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
+        this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
+        this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+
+        poseJson.people.forEach(personJson => {
+          this.addPerson(new OpenposePerson(null,
+            new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
+            personJson.hand_left_keypoints_2d ? 
+              new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+            personJson.hand_right_keypoints_2d ? 
+              new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+            personJson.face_keypoints_2d ? 
+              new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+          ));
+        });
+      };
+
+      reader.readAsText(file);
+      return false;
+    },
   },
   components: {
     PlusSquareOutlined,
@@ -526,6 +576,9 @@ export default defineComponent({
 <template>
   <a-row>
     <a-col :span="8">
+      <a-divider orientation="left" orientation-margin="0px">
+        Canvas
+      </a-divider>
       <div>
         <a-input-number type="inputNumber" addon-before="Width" addon-after="px" v-model:value="canvasWidth" :min="64"
           :max="4096" />
@@ -533,7 +586,9 @@ export default defineComponent({
           :max="4096" />
         <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
       </div>
-
+      <a-divider orientation="left" orientation-margin="0px">
+        Background Image
+      </a-divider>
       <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
         :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
         <a-button>
@@ -549,10 +604,19 @@ export default defineComponent({
           </a-card>
         </template>
       </a-upload>
-      <a-button @click="addPerson">
+      <a-divider orientation="left" orientation-margin="0px">
+        Pose Control
+      </a-divider>
+      <a-button @click="addDefaultPerson">
         <plus-square-outlined />
         Add Person
       </a-button>
+      <a-upload accept="application/json" :beforeUpload="handleBeforeUploadJson" :showUploadList="false">
+        <a-button>
+          <upload-outlined></upload-outlined>
+          Upload JSON
+        </a-button>
+      </a-upload>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" @update:visible="onVisibleChange" @keypoint-coords-change="onCoordsChange"
