@@ -562,7 +562,21 @@ export default defineComponent({
       link.href = url;
       link.download = 'pose.json';
       link.click();
-    }
+    },
+    downloadCanvasAsImage() {
+      if (!this.canvas) return;
+      // Get the data URL of the canvas as a PNG image
+      const dataUrl = this.canvas.toDataURL({format: 'image/png'});
+      // Create an img element with the data URL
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      // Create a link element with the data URL
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'pose.png';
+      // Trigger a click event on the link to initiate the download
+      link.click();
+    },
   },
   components: {
     PlusSquareOutlined,
@@ -622,6 +636,10 @@ export default defineComponent({
       <a-button @click="downloadCanvasAsJson">
         <download-outlined></download-outlined>
         Download JSON
+      </a-button>
+      <a-button @click="downloadCanvasAsImage">
+        <download-outlined></download-outlined>
+        Download Image
       </a-button>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
