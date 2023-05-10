@@ -139,8 +139,8 @@ class OpenposeObject {
     keypoints: OpenposeKeypoint2D[];
     connections: OpenposeConnection[];
     visible: boolean;
-    private group: fabric.Group | undefined;
-    private canvas: fabric.Canvas | undefined;
+    group: fabric.Group | undefined;
+    canvas: fabric.Canvas | undefined;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
         this.keypoints = keypoints;
