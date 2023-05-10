@@ -16,7 +16,7 @@ export default {
 </script>
 
 <template>
-    <div>
+    <div title="Lock/Unlock object">
         <IconSwitch :model-value="locked" @update:modelValue="$emit('update:locked', $event)">
           <template #enable-state>
             <lock-outlined></lock-outlined>

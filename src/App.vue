@@ -617,11 +617,13 @@ export default defineComponent({
         Canvas
       </a-divider>
       <div>
-        <a-input-number type="inputNumber" addon-before="Width" addon-after="px" v-model:value="canvasWidth" :min="64"
-          :max="4096" />
-        <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
-          :max="4096" />
-        <a-button type="primary" @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
+        <a-space>
+          <a-input-number type="inputNumber" addon-before="Width" addon-after="px" v-model:value="canvasWidth" :min="64"
+            :max="4096" />
+          <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
+            :max="4096" />
+          <a-button @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
+        </a-space>
       </div>
       <a-divider orientation="left" orientation-margin="0px">
         Background Image
@@ -646,24 +648,26 @@ export default defineComponent({
       <a-divider orientation="left" orientation-margin="0px">
         Pose Control
       </a-divider>
-      <a-button @click="addDefaultPerson">
-        <plus-square-outlined />
-        Add Person
-      </a-button>
-      <a-upload accept="application/json" :beforeUpload="handleBeforeUploadJson" :showUploadList="false">
-        <a-button>
-          <upload-outlined></upload-outlined>
-          Upload JSON
+      <a-space>
+        <a-button @click="addDefaultPerson">
+          <plus-square-outlined />
+          Add Person
         </a-button>
-      </a-upload>
-      <a-button @click="downloadCanvasAsJson">
-        <download-outlined></download-outlined>
-        Download JSON
-      </a-button>
-      <a-button @click="downloadCanvasAsImage">
-        <download-outlined></download-outlined>
-        Download Image
-      </a-button>
+        <a-upload accept="application/json" :beforeUpload="handleBeforeUploadJson" :showUploadList="false">
+          <a-button>
+            <upload-outlined></upload-outlined>
+            Upload JSON
+          </a-button>
+        </a-upload>
+        <a-button @click="downloadCanvasAsJson">
+          <download-outlined></download-outlined>
+          Download JSON
+        </a-button>
+        <a-button @click="downloadCanvasAsImage">
+          <download-outlined></download-outlined>
+          Download Image
+        </a-button>
+      </a-space>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" @update:visible="onVisibleChange" @keypoint-coords-change="onCoordsChange"

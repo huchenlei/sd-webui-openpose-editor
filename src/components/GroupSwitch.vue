@@ -16,7 +16,7 @@ export default {
 </script>
 
 <template>
-    <div>
+    <div class="group-switch" title="Group/Ungroup object">
         <IconSwitch :model-value="grouped" @update:modelValue="$emit('update:grouped', $event)">
           <template #enable-state>
             <group-outlined></group-outlined>

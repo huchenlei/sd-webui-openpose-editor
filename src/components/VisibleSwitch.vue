@@ -16,7 +16,7 @@ export default {
 </script>
 
 <template>
-    <div class="visible-switch">
+    <div class="visible-switch" title="Toggle visibility">
         <IconSwitch :model-value="visible" @update:modelValue="$emit('update:visible', $event)">
           <template #enable-state>
             <eye-outlined/>

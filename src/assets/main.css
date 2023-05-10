@@ -1,6 +1,6 @@
 @import './base.css';
 
-.visible-switch {
+.visible-switch, .group-switch {
     padding: 3px;
 }
 
@@ -33,4 +33,8 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
+}
+
+.ant-space {
+    margin-bottom: 5px;
 }
