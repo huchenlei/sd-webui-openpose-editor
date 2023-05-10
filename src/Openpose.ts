@@ -1,6 +1,8 @@
 import { fabric } from 'fabric';
 import _ from 'lodash';
 
+const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
+
 class OpenposeKeypoint2D extends fabric.Circle {
     static radius: number = 2;
     static idCounter: number = 0;
@@ -10,7 +12,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
     connections: Array<OpenposeConnection>;
     selected_in_group: boolean;
 
-    constructor(x: number, y: number, confidence: number, color: string, name: string) {
+    constructor(x: number, y: number, confidence: number, color: string, name: string, opacity: number = 1.0) {
         super({
             radius: OpenposeKeypoint2D.radius,
             left: x - OpenposeKeypoint2D.radius,
@@ -20,6 +22,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
             strokeWidth: 1,
             hasControls: false, // Disallow user to scale the keypoint circle.
             hasBorders: false,
+            opacity: opacity,
         });
 
         this.confidence = confidence;
@@ -90,7 +93,7 @@ class OpenposeConnection extends fabric.Line {
     k1: OpenposeKeypoint2D;
     k2: OpenposeKeypoint2D;
 
-    constructor(k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string) {
+    constructor(k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string, opacity: number = 1.0) {
         super([k1.x, k1.y, k2.x, k2.y], {
             fill: color,
             stroke: color,
@@ -99,6 +102,7 @@ class OpenposeConnection extends fabric.Line {
             selectable: false,
             // Connections should not appear in events.
             evented: false,
+            opacity: opacity,
         });
         this.k1 = k1;
         this.k2 = k2;
@@ -130,15 +134,20 @@ class OpenposeConnection extends fabric.Line {
     }
 };
 
+
 class OpenposeObject {
     keypoints: OpenposeKeypoint2D[];
     connections: OpenposeConnection[];
     visible: boolean;
+    private group: fabric.Group | undefined;
+    private canvas: fabric.Canvas | undefined;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
         this.keypoints = keypoints;
         this.connections = connections;
         this.visible = true;
+        this.group = undefined;
+        this.canvas = undefined;
 
         // Negative x, y means invalid keypoint.
         this.keypoints.forEach(keypoint => {
@@ -149,20 +158,74 @@ class OpenposeObject {
     addToCanvas(canvas: fabric.Canvas) {
         this.keypoints.forEach(p => canvas.add(p));
         this.connections.forEach(c => canvas.add(c));
+        this.canvas = canvas;
     }
 
     removeFromCanvas(canvas: fabric.Canvas) {
         this.keypoints.forEach(p => canvas.remove(p));
         this.connections.forEach(c => canvas.remove(c));
+        this.canvas = undefined;
     }
 
     serialize(): number[] {
         return _.flatten(this.keypoints.map(p => p._visible ? [p.x, p.y, 1.0] : [0.0, 0.0, 0.0]));
     }
+
+    makeGroup() {
+        if (this.group !== undefined)
+            return;
+        if (this.canvas === undefined)
+            throw 'Cannot group object as the object is not on canvas yet. Call `addToCanvas` first.'
+
+        const objects = [...this.keypoints, ...this.connections];
+
+        // Get all the objects as selection
+        var sel = new fabric.ActiveSelection(objects, {
+            canvas: this.canvas,
+            lockScalingX: true,
+            lockScalingY: true,
+            opacity: _.mean(objects.map(o => o.opacity)),
+        });
+
+        // Make the objects active
+        this.canvas.setActiveObject(sel);
+
+        // Group the objects
+        this.group = sel.toGroup();
+    }
+
+    ungroup() {
+        if (this.group === undefined)
+            return;
+        if (this.canvas === undefined)
+            throw 'Cannot group object as the object is not on canvas yet. Call `addToCanvas` first.';
+
+        this.group.toActiveSelection();
+        this.group = undefined;
+        this.canvas.discardActiveObject();
+
+        // Need to refresh every connection, as their coords information are outdated once ungrouped
+        this.connections.forEach(c => {
+            c.update(c.k1, IDENTITY_MATRIX);
+            c.update(c.k2, IDENTITY_MATRIX);
+        });
+    }
+
+    set grouped(grouped: boolean) {
+        if (grouped) {
+            this.makeGroup();
+        } else {
+            this.ungroup();
+        }
+    }
+
+    get grouped(): boolean {
+        return this.group !== undefined;
+    }
 };
 
-function formatColor(color: [number, number, number], opacity: number = 1.0): string {
-    return `rgba(${color.join(", ")}, ${opacity})`;
+function formatColor(color: [number, number, number]): string {
+    return `rgb(${color.join(", ")})`;
 }
 
 class OpenposeBody extends OpenposeObject {
@@ -222,8 +285,9 @@ class OpenposeBody extends OpenposeObject {
                 p[0],
                 p[1],
                 p[2],
-                formatColor(color, 0.7),
-                keypoint_name
+                formatColor(color),
+                keypoint_name,
+                /* opacity= */ 0.7
             ));
 
         const connections = _.zipWith(OpenposeBody.keypoints_connections, OpenposeBody.colors.slice(0, 17),
@@ -231,7 +295,8 @@ class OpenposeBody extends OpenposeObject {
                 return new OpenposeConnection(
                     keypoints[connection[0]],
                     keypoints[connection[1]],
-                    formatColor(color, 0.7)
+                    formatColor(color),
+                    /* opacity= */ 0.7
                 );
             });
 

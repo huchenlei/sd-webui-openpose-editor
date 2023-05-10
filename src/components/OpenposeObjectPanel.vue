@@ -2,6 +2,7 @@
     <a-collapse-panel>
         <template #header>
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
+            <GroupSwitch v-model:grouped="object.grouped" @update:grouped="onGroupedChange" />
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <close-outlined @click="removeObject" class="close-icon" />
         </template>
@@ -24,6 +25,7 @@
 <script lang="ts">
 import { OpenposeKeypoint2D, OpenposeObject } from '../Openpose';
 import VisibleSwitch from './VisibleSwitch.vue';
+import GroupSwitch from './GroupSwitch.vue';
 import { CloseOutlined } from '@ant-design/icons-vue';
 
 export default {
@@ -32,7 +34,7 @@ export default {
             type: OpenposeObject,
             required: true,
         },
-        display_name : {
+        display_name: {
             type: String,
             required: true,
         },
@@ -52,7 +54,7 @@ export default {
                 if (keypoint._visible) all_invisible = false;
                 keypoint._visible &&= visible;
             }
-            
+
             // Only when all keypoints invisible, we want to turn the them
             // all to visible.
             if (visible && all_invisible) {
@@ -65,6 +67,9 @@ export default {
         onVisibleChange(visible: boolean) {
             // Handle the visibility change for the object
             this.$emit('update:visible', visible);
+        },  
+        onGroupedChange(grouped: boolean) {
+            
         },
         onKeypointXChange(x: number, keypoint: OpenposeKeypoint2D) {
             keypoint.x = x;
@@ -77,6 +82,7 @@ export default {
     },
     components: {
         VisibleSwitch,
+        GroupSwitch,
         CloseOutlined,
     }
 };
