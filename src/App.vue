@@ -534,7 +534,14 @@ export default defineComponent({
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        const poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
+        let poseJson : IOpenposeJson;
+        try {
+          poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
+        } catch(ex: any) {
+          this.$notify({ title: 'Error', desc: ex.message });
+          return;
+        }
+
         const canvasHeight = poseJson.canvas_height;
         const canvasWidth = poseJson.canvas_width;
 
