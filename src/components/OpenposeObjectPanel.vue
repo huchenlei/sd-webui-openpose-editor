@@ -2,7 +2,7 @@
     <a-collapse-panel>
         <template #header>
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
-            <GroupSwitch v-model:grouped="object.grouped" @update:grouped="onGroupedChange" />
+            <GroupSwitch v-model:grouped="object.grouped" />
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <close-outlined @click="removeObject" class="close-icon" />
         </template>
@@ -68,9 +68,6 @@ export default {
             // Handle the visibility change for the object
             this.$emit('update:visible', visible);
         },  
-        onGroupedChange(grouped: boolean) {
-            
-        },
         onKeypointXChange(x: number, keypoint: OpenposeKeypoint2D) {
             keypoint.x = x;
             this.$emit('keypoint-coords-change', keypoint);
