@@ -31,13 +31,20 @@ interface AppData {
 
   personName: string;
   hideInvisibleKeypoints: boolean;
-  people: OpenposePerson[];
+  people: Map<number, OpenposePerson>;
   keypointMap: Map<number, UnwrapRef<OpenposeKeypoint2D>>,
   canvas: fabric.Canvas | null;
 
   // Fields for uploaded background images.
   uploadedImageList: LockableUploadFile[];
   canvasImageMap: Map<string, fabric.Image>;
+
+  // The corresponding OpenposePerson that the user has the collapse element
+  // expanded.
+  activePersonId: string | undefined;
+  // The corresponding OpenposeObject(Hand/Face) that the user has the
+  // collapse element expanded.
+  activeBodyPartId: string | undefined;
 };
 
 const default_body_keypoints: [number, number, number][] = [
@@ -276,11 +283,13 @@ export default defineComponent({
       canvasWidth: 512,
       personName: '',
       hideInvisibleKeypoints: false,
-      people: [],
+      people: new Map<number, OpenposePerson>(),
       canvas: null,
       keypointMap: new Map<number, UnwrapRef<OpenposeKeypoint2D>>(),
       uploadedImageList: [],
       canvasImageMap: new Map<string, fabric.Image>(),
+      activePersonId: undefined,
+      activeBodyPartId: undefined,
     };
   },
   mounted() {
@@ -357,7 +366,7 @@ export default defineComponent({
       proxy.y = keypoint.y;
     },
     addPerson(newPerson: OpenposePerson) {
-      this.people.push(newPerson);
+      this.people.set(newPerson.id, newPerson);
       newPerson.addToCanvas(this.canvas!);
       // Add the reactive keypoints to the keypointMap
       newPerson.allKeypoints().forEach((keypoint) => {
@@ -370,7 +379,7 @@ export default defineComponent({
       this.addPerson(newPerson);
     },
     removePerson(person: OpenposePerson) {
-      this.people = this.people.filter(p => p !== person);
+      this.people.delete(person.id);
       person.removeFromCanvas(this.canvas!);
       // Remove the reactive keypoints from the keypointMap
       person.allKeypoints().forEach((keypoint) => {
@@ -433,7 +442,7 @@ export default defineComponent({
       this.canvas.setHeight(newHeight);
       this.canvas.calcOffset();
       this.canvas.requestRenderAll();
-    },    
+    },
     onLockedChange(file: LockableUploadFile, locked: boolean) {
       const img = this.canvasImageMap.get(file.uid);
       if (!img) return;
@@ -458,21 +467,18 @@ export default defineComponent({
       }
       this.canvas?.renderAll();
     },
-    onActiveOpenposeObjectPanelChange(activePanelIds: string[]) {
-      if (!this.canvas) return;
+    updateActivePerson(activePersonId: string | undefined) {
+      if (!activePersonId) {
+        // Collapse current panel.
+        // If there is a body part panel expanded, collapse that as well.
+        const activePerson = this.people.get(parseInt(this.activePersonId!))!;
+        this.updateActiveBodyPart(undefined, activePerson);
+      }
 
-      this.canvas.discardActiveObject();
-      const allKeypoints: OpenposeKeypoint2D[] = [];
-      activePanelIds.forEach(id => {
-        const person = this.people.filter(p => p.id == parseInt(id))[0];
-        allKeypoints.push(...person.allKeypoints());
-      });
-      const activeSelection = new fabric.ActiveSelection(
-        allKeypoints,
-        { canvas: this.canvas }
-      );
-      this.canvas.setActiveObject(activeSelection);
-      this.canvas.renderAll();
+      this.activePersonId = activePersonId;
+    },
+    updateActiveBodyPart(activeBodyPartId: string | undefined, person: OpenposePerson) {
+      this.activeBodyPartId = activeBodyPartId;
     },
     handleBeforeUploadImage(file: Blob) {
       const reader = new FileReader();
@@ -534,10 +540,10 @@ export default defineComponent({
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        let poseJson : IOpenposeJson;
+        let poseJson: IOpenposeJson;
         try {
           poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
-        } catch(ex: any) {
+        } catch (ex: any) {
           this.$notify({ title: 'Error', desc: ex.message });
           return;
         }
@@ -567,7 +573,7 @@ export default defineComponent({
     },
     downloadCanvasAsJson() {
       const data = {
-        people: this.people.map(person => person.toJson()),
+        people: [...this.people.values()].map(person => person.toJson()),
         canvas_width: this.canvasWidth,
         canvas_height: this.canvasHeight,
       } as IOpenposeJson;
@@ -664,8 +670,8 @@ export default defineComponent({
           Download Image
         </a-button>
       </a-space>
-      <a-collapse @change="onActiveOpenposeObjectPanelChange">
-        <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
+      <a-collapse accordion :activeKey="activePersonId" @update:activeKey="updateActivePerson">
+        <OpenposeObjectPanel v-for="person in people.values()" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" :key="person.id">
           <template #extra-control>
             <a-button v-if="person.left_hand === undefined" @click="addDefaultObject(person, 'left_hand')">Add left
@@ -673,13 +679,13 @@ export default defineComponent({
             <a-button v-if="person.right_hand === undefined" @click="addDefaultObject(person, 'right_hand')">Add right
               hand</a-button>
             <a-button v-if="person.face === undefined" @click="addDefaultObject(person, 'face')">Add face</a-button>
-            <a-collapse accordion>
+            <a-collapse accordion :activeKey="activeBodyPartId" @update:activeKey="updateActiveBodyPart($event, person)">
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
-                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')" />
+                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')" :key="0" />
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
-                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')" />
+                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')" :key="1" />
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
-                @removeObject="removeObject(person, 'face')" />
+                @removeObject="removeObject(person, 'face')" :key="2" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
