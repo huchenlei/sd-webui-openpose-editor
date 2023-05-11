@@ -28,6 +28,8 @@ import VisibleSwitch from './VisibleSwitch.vue';
 import GroupSwitch from './GroupSwitch.vue';
 import { CloseOutlined } from '@ant-design/icons-vue';
 
+const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
+
 export default {
     props: {
         object: {
@@ -68,13 +70,18 @@ export default {
             // Handle the visibility change for the object
             this.$emit('update:visible', visible);
         },  
+        onCoordsChange(keypoint: OpenposeKeypoint2D) {
+            keypoint.updateConnections(IDENTITY_MATRIX);
+            keypoint.setCoords();
+            keypoint.canvas?.renderAll();
+        },
         onKeypointXChange(x: number, keypoint: OpenposeKeypoint2D) {
             keypoint.x = x;
-            this.$emit('keypoint-coords-change', keypoint);
+            this.onCoordsChange(keypoint);
         },
         onKeypointYChange(y: number, keypoint: OpenposeKeypoint2D) {
             keypoint.y = y;
-            this.$emit('keypoint-coords-change', keypoint);
+            this.onCoordsChange(keypoint);
         },
     },
     components: {

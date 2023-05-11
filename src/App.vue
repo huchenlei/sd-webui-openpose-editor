@@ -464,11 +464,6 @@ export default defineComponent({
       }
       this.canvas?.renderAll();
     },
-    onCoordsChange(keypoint: OpenposeKeypoint2D) {
-      keypoint.updateConnections(IDENTITY_MATRIX);
-      keypoint.setCoords();
-      this.canvas?.renderAll();
-    },
     onActiveOpenposeObjectPanelChange(activePanelIds: string[]) {
       if (!this.canvas) return;
 
@@ -670,8 +665,7 @@ export default defineComponent({
       </a-space>
       <a-collapse @change="onActiveOpenposeObjectPanelChange">
         <OpenposeObjectPanel v-for="person in people" :object="person.body" :display_name="person.name"
-          @removeObject="removePerson(person)" @update:visible="onVisibleChange" @keypoint-coords-change="onCoordsChange"
-          :key="person.id">
+          @removeObject="removePerson(person)" @update:visible="onVisibleChange" :key="person.id">
           <template #extra-control>
             <a-button v-if="person.left_hand === undefined" @click="addDefaultObject(person, 'left_hand')">Add left
               hand</a-button>
@@ -681,13 +675,12 @@ export default defineComponent({
             <a-collapse accordion>
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
                 :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')"
-                @keypoint-coords-change="onCoordsChange" @update:visible="onVisibleChange" />
+                @update:visible="onVisibleChange" />
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
                 :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')"
-                @keypoint-coords-change="onCoordsChange" @update:visible="onVisibleChange" />
-              <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
-                @removeObject="removeObject(person, 'face')" @keypoint-coords-change="onCoordsChange"
                 @update:visible="onVisibleChange" />
+              <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
+                @removeObject="removeObject(person, 'face')" @update:visible="onVisibleChange" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
