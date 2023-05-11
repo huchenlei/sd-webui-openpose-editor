@@ -67,8 +67,10 @@ export default {
             this.$emit("removeObject", this.object);
         },
         onVisibleChange(visible: boolean) {
-            // Handle the visibility change for the object
-            this.$emit('update:visible', visible);
+            this.$nextTick(() => {
+                // Now, call renderAll() after the visibility updates are done
+                this.object.canvas?.renderAll();
+            });
         },  
         onCoordsChange(keypoint: OpenposeKeypoint2D) {
             keypoint.updateConnections(IDENTITY_MATRIX);
