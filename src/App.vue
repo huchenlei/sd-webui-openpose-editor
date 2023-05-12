@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type App, type UnwrapRef, reactive } from 'vue';
+import { defineComponent, type UnwrapRef, reactive } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';

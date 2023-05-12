@@ -1,4 +1,4 @@
-import { type App } from 'vue';
+import type { App } from 'vue';
 import { message, notification } from 'ant-design-vue';
 
 declare module '@vue/runtime-core' {
