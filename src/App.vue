@@ -14,7 +14,6 @@ Dev TODO List:
 - Attach hand/face to correct location when added
 - bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
 - Auto-zoom in/out and lock zoom level when face/hand are selected
-- Read JSON/background file from POST request params
 - post result back to parent frame
 - [Optional]: make a extension tab to in WebUI to host the iframe
  */
@@ -573,6 +572,22 @@ export default defineComponent({
             new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
         ));
       });
+    },
+    loadFromRequestParams() {
+      const data = window.dataFromServer;
+      if (_.isEmpty(data)) {
+        return;
+      }
+
+      let poseJson: IOpenposeJson;
+      try {
+          poseJson = JSON.parse(data.pose) as IOpenposeJson;
+        } catch (ex: any) {
+          this.$notify({ title: 'Error', desc: ex.message });
+          return;
+        }
+      this.loadPeopleFromJson(poseJson);
+      this.loadBackgroundImageFromURL(data.image_url);
     },
     downloadCanvasAsJson() {
       const data = {

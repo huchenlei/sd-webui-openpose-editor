@@ -10,8 +10,8 @@ import modules.scripts as scripts
 import modules.script_callbacks as script_callbacks
 
 class Item(BaseModel):
-    # base64 encoded image.
-    image: str
+    # image url.
+    image_url: str
     # stringified pose JSON.
     pose: str
 
