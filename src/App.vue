@@ -482,34 +482,37 @@ export default defineComponent({
     handleBeforeUploadImage(file: Blob) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        fabric.Image.fromURL(e.target!.result! as string, (img) => {
-          img.set({
-            left: 0,
-            top: 0,
-            scaleX: 1.0,
-            scaleY: 1.0,
-            opacity: 0.5,
-            hasControls: true,
-            hasBorders: true,
-            lockScalingX: false,
-            lockScalingY: false,
-          });
-
-          this.canvas?.add(img);
-          // Image should not block skeleton.
-          this.canvas?.moveTo(img, 0);
-          this.canvas?.renderAll();
-
-          const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];
-          uploadFile.locked = false;
-          uploadFile.scale = 1.0;
-          this.canvasImageMap.set(uploadFile.uid, img);
-        });
+        this.loadBackgroundImageFromURL(e.target!.result! as string);
       };
       reader.readAsDataURL(file);
 
       // Return false to prevent the default upload behavior
       return false;
+    },
+    loadBackgroundImageFromURL(url: string) {
+      fabric.Image.fromURL(url, (img) => {
+        img.set({
+          left: 0,
+          top: 0,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          opacity: 0.5,
+          hasControls: true,
+          hasBorders: true,
+          lockScalingX: false,
+          lockScalingY: false,
+        });
+
+        this.canvas?.add(img);
+        // Image should not block skeleton.
+        this.canvas?.moveTo(img, 0);
+        this.canvas?.renderAll();
+
+        const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];
+        uploadFile.locked = false;
+        uploadFile.scale = 1.0;
+        this.canvasImageMap.set(uploadFile.uid, img);
+      });
     },
     isImage(file: UploadFile) {
       return /\.(jpeg|jpg|gif|png|bmp)$/i.test(file.name);
@@ -532,11 +535,6 @@ export default defineComponent({
       this.canvas?.renderAll();
     },
     handleBeforeUploadJson(file: Blob) {
-      function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
-        const points = _.chunk(nums, 3) as [number, number, number][];
-        return points.map(p => [p[0] * canvasWidth, p[1] * canvasHeight, p[2]]);
-      }
-
       const reader = new FileReader();
       reader.onload = (e) => {
         let poseJson: IOpenposeJson;
@@ -546,29 +544,35 @@ export default defineComponent({
           this.$notify({ title: 'Error', desc: ex.message });
           return;
         }
-
-        const canvasHeight = poseJson.canvas_height;
-        const canvasWidth = poseJson.canvas_width;
-
-        this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
-        this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
-        this.resizeCanvas(this.canvasWidth, this.canvasHeight);
-
-        poseJson.people.forEach(personJson => {
-          this.addPerson(new OpenposePerson(null,
-            new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
-            personJson.hand_left_keypoints_2d ?
-              new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-            personJson.hand_right_keypoints_2d ?
-              new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-            personJson.face_keypoints_2d ?
-              new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-          ));
-        });
+        this.loadPeopleFromJson(poseJson);
       };
-
       reader.readAsText(file);
       return false;
+    },
+    loadPeopleFromJson(poseJson: IOpenposeJson) {
+      function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
+        const points = _.chunk(nums, 3) as [number, number, number][];
+        return points.map(p => [p[0] * canvasWidth, p[1] * canvasHeight, p[2]]);
+      }
+
+      const canvasHeight = poseJson.canvas_height;
+      const canvasWidth = poseJson.canvas_width;
+
+      this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
+      this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
+      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+
+      poseJson.people.forEach(personJson => {
+        this.addPerson(new OpenposePerson(null,
+          new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
+          personJson.hand_left_keypoints_2d ?
+            new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+          personJson.hand_right_keypoints_2d ?
+            new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+          personJson.face_keypoints_2d ?
+            new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+        ));
+      });
     },
     downloadCanvasAsJson() {
       const data = {
