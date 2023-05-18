@@ -16,7 +16,6 @@ Dev TODO List:
 - Auto-zoom in/out and lock zoom level when face/hand are selected
 - Read JSON/background file from POST request params
 - post result back to parent frame
-- Mount a get/post path on WebUI so that the plugin is accessible
 - [Optional]: make a extension tab to in WebUI to host the iframe
  */
 

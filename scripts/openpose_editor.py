@@ -24,7 +24,7 @@ def mount_openpose_api(_: gr.Blocks, app: FastAPI):
     
     @app.get('/openpose_editor_index/', response_class=HTMLResponse)
     async def index_get(request: Request):
-        return templates.TemplateResponse('index.html', {"request": request})
+        return templates.TemplateResponse('index.html', {"request": request, "data": {}})
     
     @app.post('/openpose_editor_index/', response_class=HTMLResponse)
     async def index_post(request: Request, item: Item):
