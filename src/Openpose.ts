@@ -164,6 +164,9 @@ class OpenposeObject {
     removeFromCanvas(canvas: fabric.Canvas) {
         this.keypoints.forEach(p => canvas.remove(p));
         this.connections.forEach(c => canvas.remove(c));
+        if (this.grouped) {
+            canvas.remove(this.group!);
+        } 
         this.canvas = undefined;
     }
 
