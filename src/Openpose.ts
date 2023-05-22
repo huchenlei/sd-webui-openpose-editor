@@ -87,6 +87,30 @@ class OpenposeKeypoint2D extends fabric.Circle {
             c.updateVisibility();
         });
     }
+
+    get abs_point(): fabric.Point {
+        if (this.group) {
+            const transformMatrix = this.group.calcTransformMatrix();
+            return fabric.util.transformPoint(new fabric.Point(this.x, this.y), transformMatrix);
+        } else {
+            return new fabric.Point(this.x, this.y);
+        }
+    }
+
+    get abs_x(): number {
+        return this.abs_point.x;
+    }
+
+    get abs_y(): number {
+        return this.abs_point.y;
+    }
+
+    distanceTo(other: OpenposeKeypoint2D): number {
+        return Math.sqrt(
+            Math.pow(this.x - other.x, 2) +
+            Math.pow(this.y - other.y, 2)
+        );
+    }
 };
 
 class OpenposeConnection extends fabric.Line {
@@ -129,8 +153,17 @@ class OpenposeConnection extends fabric.Line {
         }
     }
 
+    updateAll(transformMatrix: number[]) {
+        this.update(this.k1, transformMatrix);
+        this.update(this.k2, transformMatrix);
+    }
+
     updateVisibility() {
         this.visible = this.k1._visible && this.k2._visible;
+    }
+
+    get length(): number {
+        return this.k1.distanceTo(this.k2);
     }
 };
 
@@ -166,7 +199,7 @@ class OpenposeObject {
         this.connections.forEach(c => canvas.remove(c));
         if (this.grouped) {
             canvas.remove(this.group!);
-        } 
+        }
         this.canvas = undefined;
     }
 
@@ -209,12 +242,22 @@ class OpenposeObject {
 
         // Need to refresh every connection, as their coords information are outdated once ungrouped
         this.connections.forEach(c => {
-            c.update(c.k1, IDENTITY_MATRIX);
-            c.update(c.k2, IDENTITY_MATRIX);
+            // The scale applied on the group will also apply on each connection. Reset
+            // the scaling factor to 1 when ungrouping so that connection's behaviour 
+            // do not change.
+            c.set({
+                scaleX: 1.0,
+                scaleY: 1.0,
+            });
+            c.updateAll(IDENTITY_MATRIX);
         });
     }
 
     set grouped(grouped: boolean) {
+        if (this.grouped === grouped) {
+            return;
+        }
+
         if (grouped) {
             this.makeGroup();
         } else {
@@ -305,6 +348,14 @@ class OpenposeBody extends OpenposeObject {
 
         super(keypoints, connections);
     }
+
+    getKeypointByName(name: string): OpenposeKeypoint2D {
+        const index = OpenposeBody.keypoint_names.findIndex(s => s === name);
+        if (index === -1) {
+            throw `'${name}' not found in keypoint names.`;
+        }
+        return this.keypoints[index];
+    }
 };
 
 function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
@@ -371,8 +422,8 @@ class OpenposeHand extends OpenposeObject {
     constructor(rawKeypoints: [number, number, number][]) {
         const keypoints = _.zipWith(rawKeypoints, OpenposeHand.keypoint_names,
             (rawKeypoint: [number, number, number], name: string) => new OpenposeKeypoint2D(
-                rawKeypoint[0],
-                rawKeypoint[1],
+                rawKeypoint[0] > 0 ? rawKeypoint[0] : -1,
+                rawKeypoint[1] > 0 ? rawKeypoint[1] : -1,
                 rawKeypoint[2],
                 formatColor([0, 0, 255]), // All hand keypoints are marked blue.
                 name
@@ -385,13 +436,21 @@ class OpenposeHand extends OpenposeObject {
         ));
         super(keypoints, connections);
     }
+
+    /**
+     * Size of a hand is calculated as the average connection distance 
+     * (all visible connections).
+     */
+    get size(): number {
+        return _.mean(this.connections.filter(c => c.visible).map(c => c.length));
+    }
 };
 
 class OpenposeFace extends OpenposeObject {
     constructor(rawKeypoints: [number, number, number][]) {
         const keypoints = rawKeypoints.map((rawKeypoint, i) => new OpenposeKeypoint2D(
-            rawKeypoint[0],
-            rawKeypoint[1],
+            rawKeypoint[0] > 0 ? rawKeypoint[0] : -1,
+            rawKeypoint[1] > 0 ? rawKeypoint[1] : -1,
             rawKeypoint[2],
             formatColor([255, 255, 255]),
             `FaceKeypoint-${i}`
@@ -445,6 +504,74 @@ class OpenposePerson {
             hand_left_keypoints_2d: this.left_hand?.serialize(),
             face_keypoints_2d: this.face?.serialize(),
         } as IOpenposePersonJson;
+    }
+
+    private adjustHandSize(hand: OpenposeHand, wrist_keypoint: OpenposeKeypoint2D, elbow_keypoint: OpenposeKeypoint2D) {
+        hand.grouped = true;
+        // Scale the hand to fit body size
+        const forearm_length = wrist_keypoint.distanceTo(elbow_keypoint);
+        const hand_length = hand.size * 4; // There are 4 connections from wrist_joint to any fingertips.
+        let scaleRatio = forearm_length / hand_length;
+        hand.group!.scale(scaleRatio);
+    }
+
+    private adjustHandAngle(hand: OpenposeHand, wrist_keypoint: OpenposeKeypoint2D, elbow_keypoint: OpenposeKeypoint2D) {
+        // Ungroup the hand
+        hand.grouped = false;
+
+        // Calculate the angle
+        const initial_angle = fabric.util.degreesToRadians(90);
+        const angle = Math.atan2(
+            elbow_keypoint.abs_y - wrist_keypoint.abs_y,
+            elbow_keypoint.abs_x - wrist_keypoint.abs_x
+        );
+
+        // Rotate each keypoint
+        hand.keypoints.forEach(keypoint => {
+            // Create a point for the current keypoint
+            const point = new fabric.Point(keypoint.x, keypoint.y);
+
+            // Create a point for the wrist (the rotation origin)
+            const origin = new fabric.Point(wrist_keypoint.x, wrist_keypoint.y);
+
+            // Rotate the point
+            const rotatedPoint = fabric.util.rotatePoint(point, origin, angle - initial_angle);
+
+            // Update the keypoint coordinates
+            keypoint.x = rotatedPoint.x;
+            keypoint.y = rotatedPoint.y;
+        });
+
+        // Update each connection
+        hand.connections.forEach(connection => connection.updateAll(IDENTITY_MATRIX));
+    }
+
+    private adjustHandLocation(hand: OpenposeHand, wrist_keypoint: OpenposeKeypoint2D, elbow_keypoint: OpenposeKeypoint2D) {
+        hand.grouped = true;
+        // Move the group so that the wrist joint is at the wrist keypoint
+        const wrist_joint = hand.keypoints[0]; // Assuming the wrist joint is the first keypoint
+        let dx = wrist_keypoint.abs_x - wrist_joint.abs_x;
+        let dy = wrist_keypoint.abs_y - wrist_joint.abs_y;
+        hand.group!.left! += dx;
+        hand.group!.top! += dy;
+    }
+
+    private adjustHand(hand: OpenposeHand, wrist_keypoint: OpenposeKeypoint2D, elbow_keypoint: OpenposeKeypoint2D) {
+        this.adjustHandSize(hand, wrist_keypoint, elbow_keypoint);
+        this.adjustHandAngle(hand, wrist_keypoint, elbow_keypoint);
+        this.adjustHandLocation(hand, wrist_keypoint, elbow_keypoint);
+        // Update group coordinates
+        hand.group!.setCoords();
+    }
+
+    public attachLeftHand(hand: OpenposeHand) {
+        this.adjustHand(hand, this.body.getKeypointByName('left_wrist'), this.body.getKeypointByName('left_elbow'));
+        this.left_hand = hand;
+    }
+
+    public attachRightHand(hand: OpenposeHand) {
+        this.adjustHand(hand, this.body.getKeypointByName('right_wrist'), this.body.getKeypointByName('right_elbow'));
+        this.right_hand = hand;
     }
 };
 

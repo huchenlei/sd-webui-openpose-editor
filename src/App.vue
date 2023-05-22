@@ -11,7 +11,6 @@ import _ from 'lodash';
 /* 
 Dev TODO List:
 - Zoom in/out ability
-- Attach hand/face to correct location when added
 - bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
 - Auto-zoom in/out and lock zoom level when face/hand are selected
 - post result back to parent frame
@@ -389,12 +388,10 @@ export default defineComponent({
       let target: OpenposeObject;
       switch (obj_name) {
         case 'left_hand':
-          person.left_hand = new OpenposeHand(default_left_hand_keypoints);
-          target = person.left_hand;
+          target = new OpenposeHand(default_left_hand_keypoints);          
           break;
         case 'right_hand':
-          person.right_hand = new OpenposeHand(default_right_hand_keypoints);
-          target = person.right_hand;
+          target = new OpenposeHand(default_right_hand_keypoints);
           break;
         case 'face':
           person.face = new OpenposeFace(default_face_keypoints);
@@ -406,6 +403,17 @@ export default defineComponent({
       target.keypoints.forEach(keypoint => {
         this.keypointMap.set(keypoint.id, reactive(keypoint));
       });
+
+      switch (obj_name) {
+        case 'left_hand':
+          person.attachLeftHand(target);
+          break;
+        case 'right_hand':
+          person.attachRightHand(target);
+          break;
+        case 'face':
+          break;
+      }
       this.canvas?.renderAll();
     },
     removeObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
