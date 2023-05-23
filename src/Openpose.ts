@@ -221,6 +221,7 @@ class OpenposeObject {
             lockScalingX: true,
             lockScalingY: true,
             opacity: _.mean(objects.map(o => o.opacity)),
+            visible: this.visible,
         });
 
         // Make the objects active

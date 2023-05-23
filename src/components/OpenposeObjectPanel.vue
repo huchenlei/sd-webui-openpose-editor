@@ -51,6 +51,11 @@ export default {
     },
     methods: {
         updateKeypointsVisibility(visible: boolean) {
+            if (this.object.grouped) {
+                this.object.group!.set({
+                    visible: visible
+                });
+            }
             let all_invisible = true;
             for (const keypoint of this.object.keypoints) {
                 if (keypoint._visible) all_invisible = false;
@@ -71,7 +76,7 @@ export default {
                 // Now, call renderAll() after the visibility updates are done
                 this.object.canvas?.renderAll();
             });
-        },  
+        },
         onCoordsChange(keypoint: OpenposeKeypoint2D) {
             keypoint.updateConnections(IDENTITY_MATRIX);
             keypoint.setCoords();
