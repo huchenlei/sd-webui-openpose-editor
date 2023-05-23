@@ -10,9 +10,9 @@ import _ from 'lodash';
 
 /* 
 Dev TODO List:
-- Zoom in/out ability
-- bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
-- Auto-zoom in/out and lock zoom level when face/hand are selected
+- [Optional] Zoom in/out ability
+- [Optional] bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
+- [Optional] Load face/hand from JSON when adding new hand/face.
 - post result back to parent frame
 - [Optional]: make a extension tab to in WebUI to host the iframe
  */
@@ -388,7 +388,7 @@ export default defineComponent({
       let target: OpenposeObject;
       switch (obj_name) {
         case 'left_hand':
-          target = new OpenposeHand(default_left_hand_keypoints);          
+          target = new OpenposeHand(default_left_hand_keypoints);
           break;
         case 'right_hand':
           target = new OpenposeHand(default_right_hand_keypoints);
@@ -483,8 +483,64 @@ export default defineComponent({
 
       this.activePersonId = activePersonId;
     },
-    updateActiveBodyPart(activeBodyPartId: string | undefined, person: OpenposePerson) {
+    updateActiveBodyPart(activeBodyPartId: 'left_hand' | 'right_hand' | 'face' | undefined, person: OpenposePerson) {      
+      function getTarget(activeBodyPartId: string) {
+        switch (activeBodyPartId) {
+          case 'left_hand':
+            return person.left_hand!;
+            break;
+          case 'right_hand':
+            return person.right_hand!;
+          case 'face':
+            return person.face!;
+        }
+        throw `${activeBodyPartId} is not a valid body part id.`;
+      }
+
+      if (activeBodyPartId === undefined) {
+        if (this.activeBodyPartId !== undefined) {
+          // There can only be one active person. If we collapse the person panel
+          // or collapse the body part panel. This function can still receive the 
+          // correct person of the targeted object.
+          const target = getTarget(this.activeBodyPartId);
+          target.grouped = true;
+        }
+        this.resetZoom();
+      } else {
+        const target = getTarget(activeBodyPartId);
+        target.grouped = true;
+        this.zoomToGroup(target.group!, /* zoomed_size=*/ 0.8);
+        // Ungroup the object so that user can operate on each individual keypoint.
+        target.grouped = false;
+      }
       this.activeBodyPartId = activeBodyPartId;
+    },
+    resetZoom() {
+      if (!this.canvas) return;
+      this.canvas.setViewportTransform(IDENTITY_MATRIX);
+    },
+    /**
+     * Adjust canvas zoom level to fit the target group's bounding box.
+     * @param group The group object to zoom into.
+     * @param zoomed_size: How big should the group take the space of the zoomed canvas.
+     */
+    zoomToGroup(group: fabric.Group, zoomed_size: number = 1.0) {
+      if (!this.canvas) return;
+      
+      // Get the bounding rectangle of the group
+      const boundingRect = group.getBoundingRect();
+
+      // Calculate the scale factor
+      const scaleFactor = Math.min(
+        this.canvas.getWidth() / boundingRect.width,
+        this.canvas.getHeight() / boundingRect.height
+      ) * zoomed_size;
+
+      // Set the zoom level and center the viewport
+      const centerX = boundingRect.left + boundingRect.width / 2;
+      const centerY = boundingRect.top + boundingRect.height / 2;
+      const center = new fabric.Point(centerX, centerY);
+      this.canvas.zoomToPoint(center, scaleFactor);
     },
     handleBeforeUploadImage(file: Blob) {
       const reader = new FileReader();
@@ -589,11 +645,11 @@ export default defineComponent({
 
       let poseJson: IOpenposeJson;
       try {
-          poseJson = JSON.parse(data.pose) as IOpenposeJson;
-        } catch (ex: any) {
-          this.$notify({ title: 'Error', desc: ex.message });
-          return;
-        }
+        poseJson = JSON.parse(data.pose) as IOpenposeJson;
+      } catch (ex: any) {
+        this.$notify({ title: 'Error', desc: ex.message });
+        return;
+      }
       this.loadPeopleFromJson(poseJson);
       this.loadBackgroundImageFromURL(data.image_url);
     },
@@ -707,11 +763,11 @@ export default defineComponent({
             <a-button v-if="person.face === undefined" @click="addDefaultObject(person, 'face')">Add face</a-button>
             <a-collapse accordion :activeKey="activeBodyPartId" @update:activeKey="updateActiveBodyPart($event, person)">
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
-                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')" :key="0" />
+                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')" :key="'left_hand'" />
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
-                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')" :key="1" />
+                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')" :key="'right_hand'" />
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
-                @removeObject="removeObject(person, 'face')" :key="2" />
+                @removeObject="removeObject(person, 'face')" :key="'face'" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
