@@ -460,6 +460,12 @@ class OpenposeFace extends OpenposeObject {
     }
 }
 
+enum OpenposeBodyPart{
+    LEFT_HAND = 'left_hand',
+    RIGHT_HAND = 'right_hand',
+    FACE = 'face',
+};
+
 class OpenposePerson {
     static id = 0;
 
@@ -597,6 +603,7 @@ export {
     OpenposePerson,
     OpenposeHand,
     OpenposeFace,
+    OpenposeBodyPart,
 };
 
 export type {

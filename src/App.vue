@@ -1,9 +1,9 @@
 <script lang="ts">
-import { defineComponent, type UnwrapRef, reactive } from 'vue';
+import { defineComponent, type UnwrapRef, reactive, ref } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
-import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject, type IOpenposeJson } from './Openpose';
+import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject, type IOpenposeJson, OpenposeBodyPart } from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
 import _ from 'lodash';
@@ -41,7 +41,7 @@ interface AppData {
   activePersonId: string | undefined;
   // The corresponding OpenposeObject(Hand/Face) that the user has the
   // collapse element expanded.
-  activeBodyPartId: string | undefined;
+  activeBodyPart: OpenposeBodyPart | undefined;
 };
 
 const default_body_keypoints: [number, number, number][] = [
@@ -286,8 +286,11 @@ export default defineComponent({
       uploadedImageList: [],
       canvasImageMap: new Map<string, fabric.Image>(),
       activePersonId: undefined,
-      activeBodyPartId: undefined,
+      activeBodyPart: undefined,
     };
+  },
+  setup() {
+    return { OpenposeBodyPart };
   },
   mounted() {
     this.$nextTick(() => {
@@ -384,16 +387,16 @@ export default defineComponent({
       });
       this.canvas?.renderAll();
     },
-    addDefaultObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
+    addDefaultObject(person: OpenposePerson, part: OpenposeBodyPart) {
       let target: OpenposeObject;
-      switch (obj_name) {
-        case 'left_hand':
+      switch (part) {
+        case OpenposeBodyPart.LEFT_HAND:
           target = new OpenposeHand(default_left_hand_keypoints);
           break;
-        case 'right_hand':
+        case OpenposeBodyPart.RIGHT_HAND:
           target = new OpenposeHand(default_right_hand_keypoints);
           break;
-        case 'face':
+        case OpenposeBodyPart.FACE:
           person.face = new OpenposeFace(default_face_keypoints);
           target = person.face;
           break;
@@ -404,30 +407,30 @@ export default defineComponent({
         this.keypointMap.set(keypoint.id, reactive(keypoint));
       });
 
-      switch (obj_name) {
-        case 'left_hand':
-          person.attachLeftHand(target);
+      switch (part) {
+        case OpenposeBodyPart.LEFT_HAND:
+          person.attachLeftHand(target as OpenposeHand);
           break;
-        case 'right_hand':
-          person.attachRightHand(target);
+        case OpenposeBodyPart.RIGHT_HAND:
+          person.attachRightHand(target as OpenposeHand);
           break;
-        case 'face':
+        case OpenposeBodyPart.FACE:
           break;
       }
       this.canvas?.renderAll();
     },
-    removeObject(person: OpenposePerson, obj_name: 'left_hand' | 'right_hand' | 'face') {
+    removeObject(person: OpenposePerson, part: OpenposeBodyPart) {
       let target: OpenposeObject | undefined;
-      switch (obj_name) {
-        case 'left_hand':
+      switch (part) {
+        case OpenposeBodyPart.LEFT_HAND:
           target = person.left_hand;
           person.left_hand = undefined;
           break;
-        case 'right_hand':
+        case OpenposeBodyPart.RIGHT_HAND:
           target = person.right_hand;
           person.right_hand = undefined;
           break;
-        case 'face':
+        case OpenposeBodyPart.FACE:
           target = person.face;
           person.face = undefined;
           break;
@@ -483,37 +486,24 @@ export default defineComponent({
 
       this.activePersonId = activePersonId;
     },
-    updateActiveBodyPart(activeBodyPartId: 'left_hand' | 'right_hand' | 'face' | undefined, person: OpenposePerson) {      
-      function getTarget(activeBodyPartId: string) {
-        switch (activeBodyPartId) {
-          case 'left_hand':
-            return person.left_hand!;
-            break;
-          case 'right_hand':
-            return person.right_hand!;
-          case 'face':
-            return person.face!;
-        }
-        throw `${activeBodyPartId} is not a valid body part id.`;
-      }
-
-      if (activeBodyPartId === undefined) {
-        if (this.activeBodyPartId !== undefined) {
+    updateActiveBodyPart(activeBodyPart: OpenposeBodyPart | undefined, person: OpenposePerson) {
+      if (activeBodyPart === undefined) {
+        if (this.activeBodyPart !== undefined) {
           // There can only be one active person. If we collapse the person panel
           // or collapse the body part panel. This function can still receive the 
           // correct person of the targeted object.
-          const target = getTarget(this.activeBodyPartId);
+          const target = person[this.activeBodyPart]!;
           target.grouped = true;
         }
         this.resetZoom();
       } else {
-        const target = getTarget(activeBodyPartId);
+        const target = person[activeBodyPart]!;
         target.grouped = true;
         this.zoomToGroup(target.group!, /* zoomed_size=*/ 0.8);
         // Ungroup the object so that user can operate on each individual keypoint.
         target.grouped = false;
       }
-      this.activeBodyPartId = activeBodyPartId;
+      this.activeBodyPart = activeBodyPart;
     },
     resetZoom() {
       if (!this.canvas) return;
@@ -526,7 +516,7 @@ export default defineComponent({
      */
     zoomToGroup(group: fabric.Group, zoomed_size: number = 1.0) {
       if (!this.canvas) return;
-      
+
       // Get the bounding rectangle of the group
       const boundingRect = group.getBoundingRect();
 
@@ -756,18 +746,23 @@ export default defineComponent({
         <OpenposeObjectPanel v-for="person in people.values()" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" :key="person.id">
           <template #extra-control>
-            <a-button v-if="person.left_hand === undefined" @click="addDefaultObject(person, 'left_hand')">Add left
+            <a-button v-if="person.left_hand === undefined"
+              @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">Add left
               hand</a-button>
-            <a-button v-if="person.right_hand === undefined" @click="addDefaultObject(person, 'right_hand')">Add right
+            <a-button v-if="person.right_hand === undefined"
+              @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">Add right
               hand</a-button>
-            <a-button v-if="person.face === undefined" @click="addDefaultObject(person, 'face')">Add face</a-button>
-            <a-collapse accordion :activeKey="activeBodyPartId" @update:activeKey="updateActiveBodyPart($event, person)">
+            <a-button v-if="person.face === undefined" @click="addDefaultObject(person, OpenposeBodyPart.FACE)">Add
+              face</a-button>
+            <a-collapse accordion :activeKey="activeBodyPart" @update:activeKey="updateActiveBodyPart($event, person)">
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
-                :display_name="'Left Hand'" @removeObject="removeObject(person, 'left_hand')" :key="'left_hand'" />
+                :display_name="'Left Hand'" @removeObject="removeObject(person, OpenposeBodyPart.LEFT_HAND)"
+                :key="OpenposeBodyPart.LEFT_HAND" />
               <OpenposeObjectPanel v-if="person.right_hand !== undefined" :object="person.right_hand"
-                :display_name="'Right Hand'" @removeObject="removeObject(person, 'right_hand')" :key="'right_hand'" />
+                :display_name="'Right Hand'" @removeObject="removeObject(person, OpenposeBodyPart.RIGHT_HAND)"
+                :key="OpenposeBodyPart.RIGHT_HAND" />
               <OpenposeObjectPanel v-if="person.face !== undefined" :object="person.face" :display_name="'Face'"
-                @removeObject="removeObject(person, 'face')" :key="'face'" />
+                @removeObject="removeObject(person, OpenposeBodyPart.FACE)" :key="OpenposeBodyPart.FACE" />
             </a-collapse>
           </template>
         </OpenposeObjectPanel>
@@ -784,5 +779,4 @@ export default defineComponent({
 .hidden {
   opacity: 50%;
   text-decoration: line-through;
-}
-</style> 
+}</style> 
