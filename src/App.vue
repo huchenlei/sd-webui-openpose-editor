@@ -401,7 +401,9 @@ export default defineComponent({
           target = person.face;
           break;
       }
-
+      this.addObject(person, part, target);
+    },
+    addObject(person: OpenposePerson, part: OpenposeBodyPart, target: OpenposeObject) {
       target.addToCanvas(this.canvas!);
       target.keypoints.forEach(keypoint => {
         this.keypointMap.set(keypoint.id, reactive(keypoint));
@@ -587,36 +589,31 @@ export default defineComponent({
 
       this.canvas?.renderAll();
     },
-    handleBeforeUploadJson(file: Blob) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        let poseJson: IOpenposeJson;
-        try {
-          poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
-        } catch (ex: any) {
-          this.$notify({ title: 'Error', desc: ex.message });
-          return;
-        }
-        this.loadPeopleFromJson(poseJson);
-      };
-      reader.readAsText(file);
-      return false;
+    readOpenposeJson(file: Blob): Promise<IOpenposeJson> {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          let poseJson: IOpenposeJson;
+          try {
+            poseJson = JSON.parse(e.target!.result! as string) as IOpenposeJson;
+          } catch (ex: any) {
+            reject(ex);
+            return;
+          }
+          resolve(poseJson);
+        };
+        reader.readAsText(file);
+      });
     },
-    loadPeopleFromJson(poseJson: IOpenposeJson) {
+    parseOpenposeJson(poseJson: IOpenposeJson): OpenposePerson[] {
       function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
         const points = _.chunk(nums, 3) as [number, number, number][];
         return points.map(p => [p[0] * canvasWidth, p[1] * canvasHeight, p[2]]);
       }
-
       const canvasHeight = poseJson.canvas_height;
       const canvasWidth = poseJson.canvas_width;
-
-      this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
-      this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
-      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
-
-      poseJson.people.forEach(personJson => {
-        this.addPerson(new OpenposePerson(null,
+      return poseJson.people.map(personJson =>
+        new OpenposePerson(null,
           new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
           personJson.hand_left_keypoints_2d ?
             new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
@@ -624,8 +621,56 @@ export default defineComponent({
             new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
           personJson.face_keypoints_2d ?
             new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-        ));
+        )
+      );
+    },
+    /**
+     * Adds a body part from the given JSON file.
+     * The given JSON is expected to only have one person.
+     * @param file JSON file blob
+     * @param person 
+     * @param part 
+     */
+    addJsonObject(file: Blob, person: OpenposePerson, part: OpenposeBodyPart) {
+      this.readOpenposeJson(file).then(this.parseOpenposeJson).then((people: OpenposePerson[]) => {
+        if (people.length === 0) return;
+        const firstPerson = people[0];
+        switch (part) {
+          case OpenposeBodyPart.LEFT_HAND:
+            if (firstPerson.left_hand === undefined) {
+              this.$notify({ title: 'Error', desc: 'Left hand does not exist in Json' });
+              return;
+            }
+            this.addObject(person, part, firstPerson.left_hand);
+            break;
+          case OpenposeBodyPart.RIGHT_HAND:
+            if (firstPerson.right_hand === undefined) {
+              this.$notify({ title: 'Error', desc: 'Right hand does not exist in Json' });
+              return;
+            }
+            this.addObject(person, part, firstPerson.right_hand);
+            break;
+          case OpenposeBodyPart.FACE:
+            break;
+        }
       });
+      return false;
+    },
+    /**
+     * Adds all people specified in the given JSON file to canvas.
+     * @param file JSON file blob
+     */
+    handleBeforeUploadJson(file: Blob) {
+      this.readOpenposeJson(file).then(this.loadPeopleFromJson);
+      return false;
+    },
+    loadPeopleFromJson(poseJson: IOpenposeJson) {
+      const canvasHeight = poseJson.canvas_height;
+      const canvasWidth = poseJson.canvas_width;
+      this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
+      this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
+      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+      this.parseOpenposeJson(poseJson).forEach(person => this.addPerson(person));
     },
     loadFromRequestParams() {
       const data = window.dataFromServer;
@@ -746,12 +791,29 @@ export default defineComponent({
         <OpenposeObjectPanel v-for="person in people.values()" :object="person.body" :display_name="person.name"
           @removeObject="removePerson(person)" :key="person.id">
           <template #extra-control>
-            <a-button v-if="person.left_hand === undefined"
-              @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">Add left
-              hand</a-button>
-            <a-button v-if="person.right_hand === undefined"
-              @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">Add right
-              hand</a-button>
+            <!-- TODO: make this repetitive code a component. -->
+            <div v-if="person.left_hand === undefined">
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">Add left
+                hand</a-button>
+              <a-upload accept="application/json"
+                :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.LEFT_HAND)"
+                :showUploadList="false">
+                <a-button>
+                  <upload-outlined></upload-outlined>
+                </a-button>
+              </a-upload>
+            </div>
+            <div v-if="person.right_hand === undefined">
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">Add right
+                hand</a-button>
+              <a-upload accept="application/json"
+                :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.RIGHT_HAND)"
+                :showUploadList="false">
+                <a-button>
+                  <upload-outlined></upload-outlined>
+                </a-button>
+              </a-upload>
+            </div>
             <a-button v-if="person.face === undefined" @click="addDefaultObject(person, OpenposeBodyPart.FACE)">Add
               face</a-button>
             <a-collapse accordion :activeKey="activeBodyPart" @update:activeKey="updateActiveBodyPart($event, person)">
@@ -779,4 +841,5 @@ export default defineComponent({
 .hidden {
   opacity: 50%;
   text-decoration: line-through;
-}</style> 
+}
+</style> 
