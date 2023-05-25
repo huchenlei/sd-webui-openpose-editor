@@ -448,19 +448,34 @@ class OpenposeHand extends OpenposeObject {
 };
 
 class OpenposeFace extends OpenposeObject {
+    static keypoint_names: string[] = [
+        ..._.range(17).map(i => `FaceOutline-${i}`),
+        ..._.range(5).map(i => `LeftEyebrow-${i}`),
+        ..._.range(5).map(i => `RightEyebrow-${i}`),
+        ..._.range(4).map(i => `NoseBridge-${i}`),
+        ..._.range(5).map(i => `NoseBottom-${i}`),
+        ..._.range(6).map(i => `LeftEyeOutline-${i}`),
+        ..._.range(6).map(i => `RightEyeOutline-${i}`),
+        ..._.range(12).map(i => `MouthOuterBound-${i}`),
+        ..._.range(8).map(i => `MouthInnerBound-${i}`),
+        'LeftEyeball',
+        'RightEyeball',
+    ];
+
     constructor(rawKeypoints: [number, number, number][]) {
-        const keypoints = rawKeypoints.map((rawKeypoint, i) => new OpenposeKeypoint2D(
-            rawKeypoint[0] > 0 ? rawKeypoint[0] : -1,
-            rawKeypoint[1] > 0 ? rawKeypoint[1] : -1,
-            rawKeypoint[2],
-            formatColor([255, 255, 255]),
-            `FaceKeypoint-${i}`
-        ));
+        const keypoints = _.zipWith(rawKeypoints, OpenposeFace.keypoint_names,
+            (rawKeypoint, name) => new OpenposeKeypoint2D(
+                rawKeypoint[0] > 0 ? rawKeypoint[0] : -1,
+                rawKeypoint[1] > 0 ? rawKeypoint[1] : -1,
+                rawKeypoint[2],
+                formatColor([255, 255, 255]),
+                name
+            ));
         super(keypoints, []);
     }
 }
 
-enum OpenposeBodyPart{
+enum OpenposeBodyPart {
     LEFT_HAND = 'left_hand',
     RIGHT_HAND = 'right_hand',
     FACE = 'face',
@@ -579,6 +594,11 @@ class OpenposePerson {
     public attachRightHand(hand: OpenposeHand) {
         this.adjustHand(hand, this.body.getKeypointByName('right_wrist'), this.body.getKeypointByName('right_elbow'));
         this.right_hand = hand;
+    }
+
+    public attachFace(face: OpenposeFace) {
+        // TODO: adjust face location.
+        this.face = face;
     }
 };
 

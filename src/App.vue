@@ -12,7 +12,6 @@ import _ from 'lodash';
 Dev TODO List:
 - [Optional] Zoom in/out ability
 - [Optional] bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
-- [Optional] Load face/hand from JSON when adding new hand/face.
 - post result back to parent frame
 - [Optional]: make a extension tab to in WebUI to host the iframe
  */
@@ -417,6 +416,7 @@ export default defineComponent({
           person.attachRightHand(target as OpenposeHand);
           break;
         case OpenposeBodyPart.FACE:
+          person.attachFace(target as OpenposeFace);
           break;
       }
       this.canvas?.renderAll();
@@ -651,6 +651,11 @@ export default defineComponent({
             this.addObject(person, part, firstPerson.right_hand);
             break;
           case OpenposeBodyPart.FACE:
+            if (firstPerson.face === undefined) {
+              this.$notify({ title: 'Error', desc: 'Face does not exist in Json' });
+              return;
+            }
+            this.addObject(person, part, firstPerson.face);
             break;
         }
       });
@@ -814,8 +819,16 @@ export default defineComponent({
                 </a-button>
               </a-upload>
             </div>
-            <a-button v-if="person.face === undefined" @click="addDefaultObject(person, OpenposeBodyPart.FACE)">Add
-              face</a-button>
+            <div v-if="person.face === undefined">
+              <a-upload accept="application/json"
+                :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.FACE)"
+                :showUploadList="false">
+                <a-button>
+                  Add Face
+                  <upload-outlined></upload-outlined>
+                </a-button>
+              </a-upload>
+            </div>
             <a-collapse accordion :activeKey="activeBodyPart" @update:activeKey="updateActiveBodyPart($event, person)">
               <OpenposeObjectPanel v-if="person.left_hand !== undefined" :object="person.left_hand"
                 :display_name="'Left Hand'" @removeObject="removeObject(person, OpenposeBodyPart.LEFT_HAND)"
