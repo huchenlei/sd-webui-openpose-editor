@@ -13,13 +13,13 @@ class OpenposeKeypoint2D extends fabric.Circle {
     constant_radius: number;
 
     constructor(
-        x: number, y: number, confidence: number, color: string, name: string, 
+        x: number, y: number, confidence: number, color: string, name: string,
         opacity: number = 1.0, constant_radius: number = 2
     ) {
         super({
             radius: constant_radius,
-            left: x - constant_radius,
-            top: y - constant_radius,
+            left: x,
+            top: y,
             fill: color,
             stroke: color,
             strokeWidth: 1,
@@ -66,19 +66,19 @@ class OpenposeKeypoint2D extends fabric.Circle {
     }
 
     get x(): number {
-        return this.left! + this.constant_radius;
+        return this.left!;
     }
 
     set x(x: number) {
-        this.left = x - this.constant_radius;
+        this.left = x;
     }
 
     get y(): number {
-        return this.top! + this.constant_radius;
+        return this.top!;
     }
 
     set y(y: number) {
-        this.top = y - this.constant_radius;
+        this.top = y;
     }
 
     get _visible(): boolean {
@@ -122,7 +122,7 @@ class OpenposeConnection extends fabric.Line {
     k2: OpenposeKeypoint2D;
 
     constructor(
-        k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string, 
+        k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string,
         opacity: number = 1.0, strokeWidth: number = 2
     ) {
         super([k1.x, k1.y, k2.x, k2.y], {
@@ -139,6 +139,7 @@ class OpenposeConnection extends fabric.Line {
         this.k2 = k2;
         this.k1.addConnection(this);
         this.k2.addConnection(this);
+        this.updateAll(IDENTITY_MATRIX);
     }
 
     /**
@@ -146,7 +147,14 @@ class OpenposeConnection extends fabric.Line {
      * changed. 
      */
     update(p: OpenposeKeypoint2D, transformMatrix: number[]) {
-        const globalPoint = fabric.util.transformPoint(new fabric.Point(p.x, p.y), transformMatrix);
+        const rawGlobalPoint = fabric.util.transformPoint(
+            p.getCenterPoint(),
+            transformMatrix
+        );
+        const globalPoint = new fabric.Point(
+            rawGlobalPoint.x - p.constant_radius / 4, 
+            rawGlobalPoint.y - p.constant_radius / 4
+        );
         if (p === this.k1) {
             this.set({
                 x1: globalPoint.x,
@@ -342,7 +350,7 @@ class OpenposeBody extends OpenposeObject {
                 formatColor(color),
                 keypoint_name,
                 /* opacity= */ 0.7,
-                /* constant_radius= */ 3
+                /* constant_radius= */ 4
             ));
 
         const connections = _.zipWith(OpenposeBody.keypoints_connections, OpenposeBody.colors.slice(0, 17),
