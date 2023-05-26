@@ -4,19 +4,22 @@ import _ from 'lodash';
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 
 class OpenposeKeypoint2D extends fabric.Circle {
-    static radius: number = 2;
     static idCounter: number = 0;
     id: number;
     confidence: number;
     name: string;
     connections: Array<OpenposeConnection>;
     selected_in_group: boolean;
+    constant_radius: number;
 
-    constructor(x: number, y: number, confidence: number, color: string, name: string, opacity: number = 1.0) {
+    constructor(
+        x: number, y: number, confidence: number, color: string, name: string, 
+        opacity: number = 1.0, constant_radius: number = 2
+    ) {
         super({
-            radius: OpenposeKeypoint2D.radius,
-            left: x - OpenposeKeypoint2D.radius,
-            top: y - OpenposeKeypoint2D.radius,
+            radius: constant_radius,
+            left: x - constant_radius,
+            top: y - constant_radius,
             fill: color,
             stroke: color,
             strokeWidth: 1,
@@ -30,6 +33,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
         this.selected_in_group = false;
+        this.constant_radius = constant_radius;
 
         this.on('scaling', this._maintainConstantRadius.bind(this));
         this.on('skewing', this._maintainConstantRadius.bind(this));
@@ -57,24 +61,24 @@ class OpenposeKeypoint2D extends fabric.Circle {
     }
 
     _maintainConstantRadius(): void {
-        this.set('radius', OpenposeKeypoint2D.radius);
+        this.set('radius', this.constant_radius);
         this.setCoords();
     }
 
     get x(): number {
-        return this.left! + OpenposeKeypoint2D.radius;
+        return this.left! + this.constant_radius;
     }
 
     set x(x: number) {
-        this.left = x - OpenposeKeypoint2D.radius;
+        this.left = x - this.constant_radius;
     }
 
     get y(): number {
-        return this.top! + OpenposeKeypoint2D.radius;
+        return this.top! + this.constant_radius;
     }
 
     set y(y: number) {
-        this.top = y - OpenposeKeypoint2D.radius;
+        this.top = y - this.constant_radius;
     }
 
     get _visible(): boolean {
@@ -337,7 +341,8 @@ class OpenposeBody extends OpenposeObject {
                 p[2],
                 formatColor(color),
                 keypoint_name,
-                /* opacity= */ 0.7
+                /* opacity= */ 0.7,
+                /* constant_radius= */ 3
             ));
 
         const connections = _.zipWith(OpenposeBody.keypoints_connections, OpenposeBody.colors.slice(0, 17),
