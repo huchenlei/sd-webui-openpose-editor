@@ -442,6 +442,11 @@ export default defineComponent({
       this.addPerson(newPerson);
     },
     removePerson(person: OpenposePerson) {
+      // If the person is active right now, deactivate it.
+      if (person.id.toString() === this.activePersonId) {
+        this.updateActivePerson(undefined);
+      }
+
       this.people.delete(person.id);
       person.removeFromCanvas(this.canvas!);
       // Remove the reactive keypoints from the keypointMap
@@ -508,6 +513,9 @@ export default defineComponent({
       target.keypoints.forEach(keypoint => {
         this.keypointMap.delete(keypoint.id);
       });
+      if (this.activeBodyPart === part) {
+        this.updateActiveBodyPart(undefined, person);
+      }
       this.canvas?.renderAll();
     },
     resizeCanvas(newWidth: number, newHeight: number) {
@@ -543,6 +551,8 @@ export default defineComponent({
       this.canvas?.renderAll();
     },
     updateActivePerson(activePersonId: string | undefined) {
+      if (this.activePersonId === activePersonId) return;
+
       if (!activePersonId) {
         // Collapse current panel.
         // If there is a body part panel expanded, collapse that as well.
@@ -553,13 +563,16 @@ export default defineComponent({
       this.activePersonId = activePersonId;
     },
     updateActiveBodyPart(activeBodyPart: OpenposeBodyPart | undefined, person: OpenposePerson) {
+      if (this.activeBodyPart === activeBodyPart) return;
+
       if (activeBodyPart === undefined) {
         if (this.activeBodyPart !== undefined) {
           // There can only be one active person. If we collapse the person panel
           // or collapse the body part panel. This function can still receive the 
           // correct person of the targeted object.
           const target = person[this.activeBodyPart]!;
-          target.grouped = true;
+          if (target)
+            target.grouped = true;
         }
         this.resetZoom();
       } else {
@@ -776,7 +789,7 @@ export default defineComponent({
     },
     async loadCanvasFromFrameMessage(message: IncomingFrameMessage) {
       this.modalId = message.modalId;
-      
+
       this.clearCanvas();
       // Load people first to set the canvas width/height first.
       this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
