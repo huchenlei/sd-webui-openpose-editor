@@ -302,6 +302,24 @@ async function calculateHash(s: string): Promise<string> {
   return hashHex;
 }
 
+function getImageDimensionsFromDataURL(dataURL: string): Promise<[number, number]> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.onload = function () {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+      resolve([width, height]);
+    };
+
+    img.onerror = function () {
+      reject(new Error('Failed to load image.'));
+    };
+
+    img.src = dataURL;
+  });
+}
+
 export default defineComponent({
   data(): AppData {
     return {
@@ -616,6 +634,7 @@ export default defineComponent({
       this.canvas?.renderAll();
     },
     scaleImage(image: LockableUploadFile, scale: number) {
+      image.scale = scale;
       if (!this.canvasImageMap.has(image.uid)) return;
 
       const img = this.canvasImageMap.get(image.uid)!;
@@ -726,6 +745,7 @@ export default defineComponent({
       this.uploadedImageList.forEach(image => {
         this.handleRemoveImage(image);
       });
+      this.uploadedImageList.splice(0); // Clear `uploadedImageList`.
     },
     loadCanvasFromRequestParams() {
       this.clearCanvas();
@@ -746,14 +766,19 @@ export default defineComponent({
     },
     async loadCanvasFromFrameMessage(message: IncomingFrameMessage) {
       this.clearCanvas();
-      this.uploadedImageList.push({
+      // Load people first to set the canvas width/height first.
+      this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
+
+      const imageFile = {
         locked: false,
         scale: 1.0,
-        name: 'imageFromURL',
+        name: 'controlnet input',
         uid: await calculateHash(message.imageURL),
-      } as LockableUploadFile);
+      } as LockableUploadFile;
+      this.uploadedImageList.push(imageFile);
       this.loadBackgroundImageFromURL(message.imageURL);
-      this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
+      const [imgWidth, imgHeight] = await getImageDimensionsFromDataURL(message.imageURL);
+      this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
     },
     downloadCanvasAsJson() {
       const data = {
