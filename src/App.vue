@@ -780,6 +780,7 @@ export default defineComponent({
       this.loadBackgroundImageFromURL(message.imageURL);
       const [imgWidth, imgHeight] = await getImageDimensionsFromDataURL(message.imageURL);
       this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
+      imageFile.locked = true;
     },
     downloadCanvasAsJson() {
       const data = {
