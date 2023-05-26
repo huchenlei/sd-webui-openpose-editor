@@ -117,11 +117,14 @@ class OpenposeConnection extends fabric.Line {
     k1: OpenposeKeypoint2D;
     k2: OpenposeKeypoint2D;
 
-    constructor(k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string, opacity: number = 1.0) {
+    constructor(
+        k1: OpenposeKeypoint2D, k2: OpenposeKeypoint2D, color: string, 
+        opacity: number = 1.0, strokeWidth: number = 2
+    ) {
         super([k1.x, k1.y, k2.x, k2.y], {
             fill: color,
             stroke: color,
-            strokeWidth: 2,
+            strokeWidth,
             // Connections(Edges) themselves are not selectable, they will adjust when relevant keypoints move.
             selectable: false,
             // Connections should not appear in events.
@@ -343,7 +346,8 @@ class OpenposeBody extends OpenposeObject {
                     keypoints[connection[0]],
                     keypoints[connection[1]],
                     formatColor(color),
-                    /* opacity= */ 0.7
+                    /* opacity= */ 0.7,
+                    /* strokeWidth= */ 4
                 );
             });
 
