@@ -746,6 +746,7 @@ export default defineComponent({
         this.handleRemoveImage(image);
       });
       this.uploadedImageList.splice(0); // Clear `uploadedImageList`.
+      this.resetZoom();
     },
     loadCanvasFromRequestParams() {
       this.clearCanvas();
