@@ -12,8 +12,6 @@ import _ from 'lodash';
 Dev TODO List:
 - [Optional] Zoom in/out ability
 - [Optional] bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
-- post result back to parent frame
-- [Optional]: make a extension tab to in WebUI to host the iframe
  */
 
 interface LockableUploadFile extends UploadFile {
@@ -52,6 +50,11 @@ interface AppData {
 interface IncomingFrameMessage {
   modalId: string;
   imageURL: string;
+  poseURL: string;
+};
+
+interface OutgoingFrameMessage {
+  modalId: string;
   poseURL: string;
 };
 
@@ -289,6 +292,12 @@ function parseDataURLtoJSON(dataURL: string): any {
   const decodedData = atob(data); // Decode the data
   const json = JSON.parse(decodedData); // Parse the decoded data as JSON
   return json;
+}
+
+function serializeJSONtoDataURL(data: any): string {
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: 'application/json' });
+  return URL.createObjectURL(blob);
 }
 
 async function calculateHash(s: string): Promise<string> {
@@ -766,6 +775,8 @@ export default defineComponent({
       this.loadBackgroundImageFromURL(data.image_url);
     },
     async loadCanvasFromFrameMessage(message: IncomingFrameMessage) {
+      this.modalId = message.modalId;
+      
       this.clearCanvas();
       // Load people first to set the canvas width/height first.
       this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
@@ -782,18 +793,23 @@ export default defineComponent({
       this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
       imageFile.locked = true;
     },
-    downloadCanvasAsJson() {
-      const data = {
+    getCanvasAsOpenposeJson(): IOpenposeJson {
+      return {
         people: [...this.people.values()].map(person => person.toJson()),
         canvas_width: this.canvasWidth,
         canvas_height: this.canvasHeight,
       } as IOpenposeJson;
-
-      const json = JSON.stringify(data);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+    },
+    sendCanvasAsFrameMessage() {
+      if (this.modalId === undefined) return;
+      window.parent.postMessage({
+        modalId: this.modalId,
+        poseURL: serializeJSONtoDataURL(this.getCanvasAsOpenposeJson()),
+      } as OutgoingFrameMessage, '*');
+    },
+    downloadCanvasAsJson() {
       const link = document.createElement('a');
-      link.href = url;
+      link.href = serializeJSONtoDataURL(this.getCanvasAsOpenposeJson());
       link.download = 'pose.json';
       link.click();
     },
@@ -826,6 +842,9 @@ export default defineComponent({
 <template>
   <a-row>
     <a-col :span="8">
+      <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
+        Send pose to ControlNet
+      </a-button>
       <a-divider orientation="left" orientation-margin="0px">
         Canvas
       </a-divider>
