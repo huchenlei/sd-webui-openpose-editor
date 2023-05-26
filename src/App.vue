@@ -41,6 +41,18 @@ interface AppData {
   // The corresponding OpenposeObject(Hand/Face) that the user has the
   // collapse element expanded.
   activeBodyPart: OpenposeBodyPart | undefined;
+
+  // The modal id to post message back to.
+  modalId: string | undefined;
+};
+
+/**
+ * The frame message from the main frame (ControlNet).
+ */
+interface IncomingFrameMessage {
+  modalId: string;
+  imageURL: string;
+  poseURL: string;
 };
 
 const default_body_keypoints: [number, number, number][] = [
@@ -272,6 +284,24 @@ const default_face_keypoints: [number, number, number][] = [];
 // identity_metrics * point == point.
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 
+function parseDataURLtoJSON(dataURL: string): any {
+  const data = dataURL.split(',')[1]; // Extract the data portion
+  const decodedData = atob(data); // Decode the data
+  const json = JSON.parse(decodedData); // Parse the decoded data as JSON
+  return json;
+}
+
+async function calculateHash(s: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(s);
+
+  const buffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(buffer));
+  const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+  return hashHex;
+}
+
 export default defineComponent({
   data(): AppData {
     return {
@@ -286,6 +316,7 @@ export default defineComponent({
       canvasImageMap: new Map<string, fabric.Image>(),
       activePersonId: undefined,
       activeBodyPart: undefined,
+      modalId: undefined,
     };
   },
   setup() {
@@ -352,6 +383,12 @@ export default defineComponent({
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
+
+      // Handle incoming frame message.
+      window.addEventListener('message', (event) => {
+        const message = event.data as IncomingFrameMessage;
+        this.loadCanvasFromFrameMessage(message);
+      });
     });
   },
   methods: {
@@ -677,7 +714,21 @@ export default defineComponent({
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
       this.parseOpenposeJson(poseJson).forEach(person => this.addPerson(person));
     },
-    loadFromRequestParams() {
+    /**
+     * Clear everything on the canvas.
+     */
+    clearCanvas() {
+      // Remove all people.
+      [...this.people.values()].forEach(person => {
+        this.removePerson(person);
+      });
+      // Remove all background images.
+      this.uploadedImageList.forEach(image => {
+        this.handleRemoveImage(image);
+      });
+    },
+    loadCanvasFromRequestParams() {
+      this.clearCanvas();
       const data = window.dataFromServer;
       if (_.isEmpty(data)) {
         return;
@@ -692,6 +743,17 @@ export default defineComponent({
       }
       this.loadPeopleFromJson(poseJson);
       this.loadBackgroundImageFromURL(data.image_url);
+    },
+    async loadCanvasFromFrameMessage(message: IncomingFrameMessage) {
+      this.clearCanvas();
+      this.uploadedImageList.push({
+        locked: false,
+        scale: 1.0,
+        name: 'imageFromURL',
+        uid: await calculateHash(message.imageURL),
+      } as LockableUploadFile);
+      this.loadBackgroundImageFromURL(message.imageURL);
+      this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
     },
     downloadCanvasAsJson() {
       const data = {
