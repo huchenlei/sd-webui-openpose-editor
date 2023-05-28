@@ -1,7 +1,62 @@
-# sd-webui-openpose-editor
+# Openpose Editor for ControlNet in Stable Diffusion WebUI
 
-This template should help get you started developing with Vue 3 in Vite.
+This extension is specifically build to be integrated into Stable Diffusion 
+WebUI's ControlNet extension.
 
+![editor_in_modal](/readme_assets/editor_in_modal.jpg)
+
+![basic_work_flow](/readme_assets/basic_workflow.gif)
+
+# Installation
+### Option1: Build the application (Recommended)
+Make sure you have nodeJS environment ready and follow `Development` section.
+Run `npm run build` to compile the application. Because the extension still
+has not reached any stable releases, this is the recommended way of installation
+so that users can get bug fixes easier.
+
+### Option2: Download the compiled application
+Download the compiled application from the release page. Unzip the package
+in the repository root and make sure hte unziped directory is named `dist`.
+
+# Usage
+The openpose editor core is build with Vue3. The gradio extension script is 
+a thin wrapper that mounts the Vue3 Application on `/openpose_editor_index`.
+
+The user can directly access the editor at `localhost:7680/openpose_editor_index`
+if desired, but the main entry point is invoking the editor in the ControlNet 
+extension. In ControlNet extension, select any openpose preprocessor, and hit
+the run preprocessor button. A preprocessor result preview will be genereated.
+Click `Edit` button at the bottom right corner of the generated image will bring
+up the openpose editor in a modal. After the edit, clicking the 
+`Send pose to ControlNet` button will send back the pose to controlnet.
+
+# Features
+1. Support for face/hand used in controlnet.
+    - The extension recognizes the face/hand objects in the controlnet preprocess
+    results.
+    - The user can add face/hand if the preprocessor result misses them. It can
+    be done by either
+        - Add Default hand (Face is not supported as face has too many keypoints (70 keypoints),
+        which makes adjust them manually really hard.)
+        - Add the object by uploading a pose JSON. The corresponding object of
+        the first person will be used.
+1. Visibility toggle
+    - If a keypoint is not recognized by ControlNet preprocessor, it will have
+    `(-1, -1)` as coordinates. Such invalid keypoints will be set as invisible 
+    in the editor.
+    - If the user sets a keypoint as invisible and send the pose back to 
+    controlnet, the limb segments that the keypoint connects will not be rendered.
+    Effectively this is how you remove a limb segment in the editor.
+1. Group toggle
+    - If you don't want to accidentally select and modify the keypoint of an 
+    canvas object (hand/face/body). You can group them.
+    - Note: If you group the object, you will not be able to rotate/scale the group.
+    The only operation the group accepts is move. This is an issue with `fabric.js`.
+    If anyone find a solution, I am willing to adjust the implementation. In order
+    to rotate/scale multiple keypoints, currently the user has to select keypoints
+    and rotate/scale the selection.
+
+# Development
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
