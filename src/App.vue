@@ -295,7 +295,7 @@ function parseDataURLtoJSON(dataURL: string): any {
 }
 
 function serializeJSONtoDataURL(data: any): string {
-  return "data:application/json;base64,"+btoa(JSON.stringify(data));
+  return "data:application/json;base64," + btoa(JSON.stringify(data));
 }
 
 async function calculateHash(s: string): Promise<string> {
@@ -683,8 +683,11 @@ export default defineComponent({
     },
     parseOpenposeJson(poseJson: IOpenposeJson): OpenposePerson[] {
       function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
+        const normalized = _.every(nums, num => Math.abs(num) <= 1.0);
+        const xFactor = normalized ? canvasWidth : 1.0;
+        const yFactor = normalized ? canvasHeight : 1.0;
         const points = _.chunk(nums, 3) as [number, number, number][];
-        return points.map(p => [p[0] * canvasWidth, p[1] * canvasHeight, p[2]]);
+        return points.map(p => [p[0] * xFactor, p[1] * yFactor, p[2]]);
       }
       const canvasHeight = poseJson.canvas_height;
       const canvasWidth = poseJson.canvas_width;
