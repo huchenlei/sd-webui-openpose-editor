@@ -219,7 +219,7 @@ class OpenposeObject {
     }
 
     serialize(): number[] {
-        return _.flatten(this.keypoints.map(p => p._visible ? [p.x, p.y, 1.0] : [0.0, 0.0, 0.0]));
+        return _.flatten(this.keypoints.map(p => p._visible ? [p.abs_x, p.abs_y, 1.0] : [0.0, 0.0, 0.0]));
     }
 
     makeGroup() {
