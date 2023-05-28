@@ -295,9 +295,7 @@ function parseDataURLtoJSON(dataURL: string): any {
 }
 
 function serializeJSONtoDataURL(data: any): string {
-  const json = JSON.stringify(data);
-  const blob = new Blob([json], { type: 'application/json' });
-  return URL.createObjectURL(blob);
+  return "data:application/json;base64,"+btoa(JSON.stringify(data));
 }
 
 async function calculateHash(s: string): Promise<string> {
