@@ -2,6 +2,7 @@ import os
 import zipfile
 import gradio as gr
 import requests
+import json
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -42,6 +43,12 @@ def get_current_release() -> Optional[str]:
         return f.read()
 
 
+def get_version_from_package_json():
+    with open(os.path.join(EXTENSION_DIR, "package.json")) as f:
+        data = json.load(f)
+        return f"v{data.get('version', None)}"
+
+
 def download_latest_release(owner, repo):
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     response = requests.get(url)
@@ -74,15 +81,15 @@ def update_app():
     owner = "huchenlei"
     repo = "sd-webui-openpose-editor"
 
-    latest_version = get_latest_release(owner, repo)
+    package_version = get_version_from_package_json()
     current_version = get_current_release()
 
-    assert latest_version is not None
-    if current_version is None or current_version < latest_version:
+    assert package_version is not None
+    if current_version is None or current_version < package_version:
         download_latest_release(owner, repo)
 
 
-def mount_openpose_api(_: gr.Blocks, app: FastAPI):    
+def mount_openpose_api(_: gr.Blocks, app: FastAPI):
     if not shared.cmd_opts.disable_openpose_editor_auto_update:
         update_app()
 
