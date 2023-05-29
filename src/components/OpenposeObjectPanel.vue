@@ -13,9 +13,9 @@
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
                 <div class="coords-group">
                     <a-input-number :value="keypoint.x" @change="onKeypointXChange($event, keypoint)" addon-before="x"
-                        :disabled="keypoint.selected_in_group" />
+                        :disabled="keypoint.selected_in_group" precision="2" />
                     <a-input-number :value="keypoint.y" @change="onKeypointYChange($event, keypoint)" addon-before="y"
-                        :disabled="keypoint.selected_in_group" />
+                        :disabled="keypoint.selected_in_group" precision="2" />
                 </div>
             </a-list-item>
         </a-list>

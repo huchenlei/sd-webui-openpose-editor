@@ -887,7 +887,7 @@ export default defineComponent({
             <img v-if="isImage(file)" :src="file.thumbUrl || file.url" :alt="file.name" class="image-thumbnail" />
             <span>{{ file.name }}</span>
             <a-input-number class="scale-ratio-input" addon-before="scale ratio" @update:value="scaleImage(file, $event)"
-              :min="0" v-model:value="file.scale" />
+              :min="0" v-model:value="file.scale" precision="2" />
             <close-outlined @click="actions.remove" class="close-icon" />
           </a-card>
         </template>
