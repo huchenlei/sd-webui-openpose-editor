@@ -576,7 +576,7 @@ export default defineComponent({
       } else {
         const target = person[activeBodyPart]!;
         target.grouped = true;
-        this.zoomToGroup(target.group!, /* zoomed_size=*/ 0.8);
+        this.zoomToGroup(target.group!, /* zoomed_size=*/ 0.5);
         // Ungroup the object so that user can operate on each individual keypoint.
         target.grouped = false;
       }
@@ -601,13 +601,13 @@ export default defineComponent({
       const scaleFactor = Math.min(
         this.canvas.getWidth() / boundingRect.width,
         this.canvas.getHeight() / boundingRect.height
-      ) * zoomed_size;
+      );
 
       // Set the zoom level and center the viewport
       const centerX = boundingRect.left + boundingRect.width / 2;
       const centerY = boundingRect.top + boundingRect.height / 2;
       const center = new fabric.Point(centerX, centerY);
-      this.canvas.zoomToPoint(center, scaleFactor);
+      this.canvas.zoomToPoint(center, scaleFactor * zoomed_size);
     },
     handleBeforeUploadImage(file: Blob) {
       const reader = new FileReader();
