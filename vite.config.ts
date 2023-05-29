@@ -18,7 +18,7 @@ export default defineConfig({
       name: 'create-version-file',
       apply: 'build',
       writeBundle() {
-        writeFileSync('dist/version.txt', packageJson.version);
+        writeFileSync('dist/version.txt', `v${packageJson.version}`);
       },
     }
   ],

@@ -56,7 +56,10 @@ def download_latest_release(owner, repo):
             with open(filename, "wb") as file:
                 file.write(response.content)
                 print("Download successful.")
-
+            
+            if os.path.exists(DIST_DIR):
+                os.unlink(DIST_DIR)
+                
             # Unzip the file
             with zipfile.ZipFile(filename, "r") as zip_ref:
                 zip_ref.extractall(DIST_DIR)
@@ -83,6 +86,7 @@ def update_app():
 
 
 def mount_openpose_api(_: gr.Blocks, app: FastAPI):
+    update_app()
     templates = Jinja2Templates(directory=DIST_DIR)
     app.mount(
         "/openpose_editor",
