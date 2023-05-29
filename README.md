@@ -5,18 +5,16 @@ WebUI's ControlNet extension.
 
 ![editor_in_modal](/readme_assets/editor_in_modal.jpg)
 
-![basic_work_flow](/readme_assets/basic_workflow.gif)
-
 # Installation
-### Option1: Build the application (Recommended)
+### Option1: Build the application 
 Make sure you have nodeJS environment ready and follow `Development` section.
-Run `npm run build` to compile the application. Because the extension still
-has not reached any stable releases, this is the recommended way of installation
-so that users can get bug fixes easier.
+Run `npm run build` to compile the application.
 
-### Option2: Download the compiled application
-Download the compiled application from the release page. Unzip the package
-in the repository root and make sure hte unziped directory is named `dist`.
+### Option2: Download the compiled application (Recommended)
+This is automatically done by `script.py` now. If you want a specific version,
+you can still download the compiled application from the release page. 
+Unzip the package in the repository root and make sure hte unziped directory is 
+named `dist`.
 
 # Usage
 The openpose editor core is build with Vue3. The gradio extension script is 
