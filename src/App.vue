@@ -806,6 +806,7 @@ export default defineComponent({
       const [imgWidth, imgHeight] = await getImageDimensionsFromDataURL(message.imageURL);
       this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
       imageFile.locked = true;
+      this.onLockedChange(imageFile, true);
     },
     getCanvasAsOpenposeJson(): IOpenposeJson {
       return {
