@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 import modules.script_callbacks as script_callbacks
+from modules import shared
 
 
 class Item(BaseModel):
@@ -55,21 +56,17 @@ def download_latest_release(owner, repo):
             filename = "dist.zip"
             with open(filename, "wb") as file:
                 file.write(response.content)
-                print("Download successful.")
-            
-            if os.path.exists(DIST_DIR):
-                os.unlink(DIST_DIR)
-                
+
             # Unzip the file
             with zipfile.ZipFile(filename, "r") as zip_ref:
-                zip_ref.extractall(DIST_DIR)
+                zip_ref.extractall(EXTENSION_DIR)
 
             # Remove the zip file
             os.remove(filename)
         else:
-            print("Failed to download the file.")
+            print(f"Failed to download the file {url}.")
     else:
-        print("Could not get the latest release or there are no assets.")
+        print(f"Could not get the latest release or there are no assets {url}.")
 
 
 def update_app():
@@ -85,8 +82,10 @@ def update_app():
         download_latest_release(owner, repo)
 
 
-def mount_openpose_api(_: gr.Blocks, app: FastAPI):
-    update_app()
+def mount_openpose_api(_: gr.Blocks, app: FastAPI):    
+    if not shared.cmd_opts.disable_openpose_editor_auto_update:
+        update_app()
+
     templates = Jinja2Templates(directory=DIST_DIR)
     app.mount(
         "/openpose_editor",
