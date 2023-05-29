@@ -4,6 +4,10 @@
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
+            <fire-outlined @click.stop="unjamInvalidKeypoints"
+                v-if="object.hasInvalidKeypoints()"
+                title="Move all invalid keypoints to visible canvas for edit." 
+                class="unjam-button"/>
             <close-outlined @click="removeObject" class="close-icon" />
         </template>
         <slot name="extra-control"></slot>
@@ -26,7 +30,7 @@
 import { OpenposeKeypoint2D, OpenposeObject } from '../Openpose';
 import VisibleSwitch from './VisibleSwitch.vue';
 import GroupSwitch from './GroupSwitch.vue';
-import { CloseOutlined } from '@ant-design/icons-vue';
+import { CloseOutlined, FireOutlined } from '@ant-design/icons-vue';
 
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 
@@ -90,11 +94,45 @@ export default {
             keypoint.y = y;
             this.onCoordsChange(keypoint);
         },
+        /**
+         * Move all invalid keypoints to visible canvas for edit.
+         */
+        unjamInvalidKeypoints() {
+            const canvasWidth = this.object.canvas!.width!;
+            const canvasHeight = this.object.canvas!.height!;
+
+            this.object.grouped = false;
+
+            let xOffset = 10;
+            let yOffset = 10;
+            const OFFSET_STEP = Math.min(canvasHeight, canvasWidth) / 10;
+
+            console.log(this.object.invalidKeypoints());
+
+            this.object.invalidKeypoints().forEach((keypoint) => {
+                keypoint.x = xOffset;
+                keypoint.y = yOffset;
+
+                // Increase the offset for the next invalid point
+                if (xOffset + OFFSET_STEP > canvasWidth) {
+                    yOffset += OFFSET_STEP;
+                    xOffset = 0;
+                } else {
+                    xOffset += OFFSET_STEP;
+                }
+
+                keypoint._visible = true;
+                this.onCoordsChange(keypoint);
+            });
+
+            this.object.canvas?.renderAll();
+        }
     },
     components: {
         VisibleSwitch,
         GroupSwitch,
         CloseOutlined,
+        FireOutlined,
     }
 };
 </script>

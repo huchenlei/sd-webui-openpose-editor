@@ -50,6 +50,10 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.connections.forEach(c => c.update(this, transformMatrix));
     }
 
+    get valid(): boolean {
+        return this.abs_x > 0 && this.abs_y > 0;
+    }
+
     _set(key: string, value: any): this {
         if (key === 'scaleX' || key === 'scaleY') {
             super._set('scaleX', 1);
@@ -199,8 +203,16 @@ class OpenposeObject {
 
         // Negative x, y means invalid keypoint.
         this.keypoints.forEach(keypoint => {
-            keypoint._visible = keypoint.x >= 0 && keypoint.y >= 0 && keypoint.confidence === 1.0;
+            keypoint._visible = keypoint.valid && keypoint.confidence === 1.0;
         });
+    }
+
+    invalidKeypoints(): OpenposeKeypoint2D[] {
+        return this.keypoints.filter(keypoint => !keypoint.valid && !keypoint._visible);
+    }
+
+    hasInvalidKeypoints(): boolean {
+        return this.invalidKeypoints().length > 0;
     }
 
     addToCanvas(canvas: fabric.Canvas) {

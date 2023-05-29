@@ -1,6 +1,6 @@
 @import './base.css';
 
-.visible-switch, .group-switch {
+.visible-switch, .group-switch, .unjam-button {
     padding: 3px;
 }
 
