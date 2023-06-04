@@ -66,7 +66,7 @@ def download_latest_release(owner, repo):
 
             # Unzip the file
             with zipfile.ZipFile(filename, "r") as zip_ref:
-                zip_ref.extractall(EXTENSION_DIR)
+                zip_ref.extractall(DIST_DIR)
 
             # Remove the zip file
             os.remove(filename)
