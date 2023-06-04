@@ -10,7 +10,6 @@ import _ from 'lodash';
 
 /* 
 Dev TODO List:
-- [Optional] Zoom in/out ability
 - [Optional] bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
  */
 
