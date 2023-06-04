@@ -408,6 +408,18 @@ export default defineComponent({
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
+      
+      // Zoom handler.
+      this.canvas.on('mouse:wheel', (opt: fabric.IEvent<WheelEvent>) => {
+          const delta = opt.e.deltaY;
+          let zoom = this.canvas!.getZoom();
+          zoom *= 0.999 ** delta;
+          if (zoom > 20) zoom = 20;
+          if (zoom < 0.01) zoom = 0.01;
+          this.canvas!.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY } as fabric.Point, zoom);
+          opt.e.preventDefault();
+          opt.e.stopPropagation();
+      });
 
       // Handle incoming frame message.
       window.addEventListener('message', (event) => {
@@ -872,6 +884,7 @@ export default defineComponent({
           <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
             :max="4096" />
           <a-button @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
+          <a-button @click="resetZoom()">Reset Zoom</a-button>
         </a-space>
       </div>
       <a-divider orientation="left" orientation-margin="0px">
