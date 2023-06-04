@@ -408,17 +408,56 @@ export default defineComponent({
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
-      
+
       // Zoom handler.
       this.canvas.on('mouse:wheel', (opt: fabric.IEvent<WheelEvent>) => {
-          const delta = opt.e.deltaY;
-          let zoom = this.canvas!.getZoom();
-          zoom *= 0.999 ** delta;
-          if (zoom > 20) zoom = 20;
-          if (zoom < 0.01) zoom = 0.01;
-          this.canvas!.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY } as fabric.Point, zoom);
-          opt.e.preventDefault();
-          opt.e.stopPropagation();
+        const delta = opt.e.deltaY;
+        let zoom = this.canvas!.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > 20) zoom = 20;
+        if (zoom < 0.01) zoom = 0.01;
+        this.canvas!.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY } as fabric.Point, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+      });
+
+      // Panning handler.
+      let panning = false;
+      let spacePressed = false;
+      // Add keydown event to document
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          spacePressed = true;
+          this.canvas!.selection = false;
+        }
+      });
+
+      // Add keyup event to document
+      document.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+          spacePressed = false;
+          this.canvas!.selection = true;
+        }
+      });
+
+      // Attach the mouse down event to start panning
+      this.canvas.on('mouse:down', (opt: fabric.IEvent) => {
+        if (spacePressed) {
+          panning = true;
+        }
+      });
+
+      // Attach the mouse move event for panning
+      this.canvas.on('mouse:move', (opt: fabric.IEvent<MouseEvent>) => {
+        if (panning && opt && opt.e) {
+          const delta = new fabric.Point(opt.e.movementX, opt.e.movementY);
+          this.canvas!.relativePan(delta);
+        }
+      });
+
+      // Attach the mouse up event to stop panning
+      this.canvas.on('mouse:up', () => {
+        panning = false;
       });
 
       // Handle incoming frame message.
@@ -874,6 +913,12 @@ export default defineComponent({
       <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
         Send pose to ControlNet
       </a-button>
+      <a-divider orientation="left" orientation-margin="0px">
+        Key Bindings
+      </a-divider>
+      <a-descriptions>
+        <a-descriptions-item label="SPACE">Hold to pan</a-descriptions-item>
+      </a-descriptions>
       <a-divider orientation="left" orientation-margin="0px">
         Canvas
       </a-divider>
