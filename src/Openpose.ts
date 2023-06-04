@@ -548,6 +548,10 @@ class OpenposePerson {
             .map(o => o === undefined ? [] : o.keypoints));
     }
 
+    allKeypointsVisible(): boolean {
+        return _.every(this.allKeypoints(), keypoint => keypoint._visible);
+    }
+
     toJson(): IOpenposePersonJson {
         return {
             pose_keypoints_2d: this.body.serialize(),

@@ -810,7 +810,9 @@ export default defineComponent({
     },
     getCanvasAsOpenposeJson(): IOpenposeJson {
       return {
-        people: [...this.people.values()].map(person => person.toJson()),
+        people: [...this.people.values()]
+          .filter(person => person.allKeypointsVisible())
+          .map(person => person.toJson()),
         canvas_width: this.canvasWidth,
         canvas_height: this.canvasHeight,
       } as IOpenposeJson;
