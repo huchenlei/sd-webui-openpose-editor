@@ -56,6 +56,9 @@ up the openpose editor in a modal. After the edit, clicking the
     to rotate/scale multiple keypoints, currently the user has to select keypoints
     and rotate/scale the selection.
 
+Here is a demo showing the difference between group and selection:
+[![group vs selection](http://img.youtube.com/vi/16j20-pkSNU/0.jpg)](http://www.youtube.com/watch?v=16j20-pkSNU)
+
 # Development
 ## Recommended IDE Setup
 

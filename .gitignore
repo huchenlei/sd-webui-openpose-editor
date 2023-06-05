@@ -30,3 +30,5 @@ coverage
 # Python
 __pycache__/
 *.pyc
+
+dist.zip
