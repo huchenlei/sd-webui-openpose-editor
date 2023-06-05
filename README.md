@@ -3,7 +3,7 @@
 This extension is specifically build to be integrated into Stable Diffusion 
 WebUI's ControlNet extension.
 
-![editor_in_modal](/readme_assets/editor_in_modal.jpg)
+![editor_in_modal](/readme_assets/editor_in_modal.png)
 
 # Installation
 ### Option1: Build the application 
