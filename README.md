@@ -14,7 +14,9 @@ Run `npm run build` to compile the application.
 This is automatically done by `script.py` now. If you want a specific version,
 you can still download the compiled application from the release page. 
 Unzip the package in the repository root and make sure hte unziped directory is 
-named `dist`.
+named `dist`. Some users in China have reported that the auto-update script 
+not working for them. In this situation, the user can either manually download
+dist.zip from Github or follow Option1.
 
 # Usage
 The openpose editor core is build with Vue3. The gradio extension script is 
