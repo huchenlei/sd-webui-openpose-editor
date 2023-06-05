@@ -843,8 +843,10 @@ export default defineComponent({
       this.modalId = message.modalId;
 
       this.clearCanvas();
-      // Load people first to set the canvas width/height first.
-      this.loadPeopleFromJson(parseDataURLtoJSON(message.poseURL) as IOpenposeJson);
+      const openposeJson = parseDataURLtoJSON(message.poseURL) as IOpenposeJson;
+      this.canvasHeight = openposeJson.canvas_height;
+      this.canvasWidth = openposeJson.canvas_width;
+      this.loadPeopleFromJson(openposeJson);
 
       const imageFile = {
         locked: false,
