@@ -911,7 +911,7 @@ export default defineComponent({
       <a-divider orientation="left" orientation-margin="0px">
         Key Bindings
       </a-divider>
-      <a-descriptions>
+      <a-descriptions :column="1">
         <a-descriptions-item label="Drag Mouse">Select ungrouped keypoints for rotation/scale/skew</a-descriptions-item>
         <a-descriptions-item label="SPACE + Drag Mouse">Hold key to pan the canvas</a-descriptions-item>
         <a-descriptions-item label="Mouse wheel">Zoom in/out</a-descriptions-item>
