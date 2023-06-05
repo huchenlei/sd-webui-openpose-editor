@@ -90,7 +90,7 @@ def update_app():
 
 
 def mount_openpose_api(_: gr.Blocks, app: FastAPI):
-    if not shared.cmd_opts.disable_openpose_editor_auto_update:
+    if not getattr(shared.cmd_opts, "disable_openpose_editor_auto_update", False):
         update_app()
 
     templates = Jinja2Templates(directory=DIST_DIR)
