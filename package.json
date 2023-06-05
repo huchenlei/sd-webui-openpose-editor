@@ -16,6 +16,7 @@
   "dependencies": {
     "@ant-design/icons-vue": "^6.1.0",
     "ant-design-vue": "^3.2.20",
+    "crypto-js": "^4.1.1",
     "fabric": "^5.3.0",
     "lodash": "^4.17.21",
     "pinia": "^2.0.32",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
+    "@types/crypto-js": "^4.1.1",
     "@types/fabric": "^5.3.2",
     "@types/jsdom": "^21.1.0",
     "@types/lodash": "^4.14.194",

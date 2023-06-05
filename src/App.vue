@@ -7,6 +7,7 @@ import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypo
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
 import _ from 'lodash';
+import CryptoJS from 'crypto-js';
 
 /* 
 Dev TODO List:
@@ -298,14 +299,7 @@ function serializeJSONtoDataURL(data: any): string {
 }
 
 async function calculateHash(s: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(s);
-
-  const buffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(buffer));
-  const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-
-  return hashHex;
+  return CryptoJS.SHA256(s).toString()
 }
 
 function getImageDimensionsFromDataURL(dataURL: string): Promise<[number, number]> {
