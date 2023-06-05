@@ -428,6 +428,8 @@ export default defineComponent({
         if (e.code === 'Space') {
           spacePressed = true;
           this.canvas!.selection = false;
+          // Prevent default behaviour of Space which is scroll the page down.
+          e.preventDefault();
         }
       });
 
