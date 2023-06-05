@@ -913,10 +913,10 @@ export default defineComponent({
   <a-row>
     <a-col :span="8">
       <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
-        Send pose to ControlNet
+        {{ $t('ui.sendPose') }}
       </a-button>
       <a-divider orientation="left" orientation-margin="0px">
-        Key Bindings
+        {{ $t('ui.keybinding') }}
       </a-divider>
       <a-descriptions :column="1">
         <a-descriptions-item label="Drag Mouse">Select ungrouped keypoints for rotation/scale/skew</a-descriptions-item>
@@ -924,7 +924,7 @@ export default defineComponent({
         <a-descriptions-item label="Mouse wheel">Zoom in/out</a-descriptions-item>
       </a-descriptions>
       <a-divider orientation="left" orientation-margin="0px">
-        Canvas
+        {{ $t('ui.canvas') }}
       </a-divider>
       <div>
         <a-space>
@@ -932,18 +932,18 @@ export default defineComponent({
             :max="4096" />
           <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
             :max="4096" />
-          <a-button @click="resizeCanvas(canvasWidth, canvasHeight)">Resize Canvas</a-button>
-          <a-button @click="resetZoom()">Reset Zoom</a-button>
+          <a-button @click="resizeCanvas(canvasWidth, canvasHeight)">{{ $t('ui.resizeCanvas') }}</a-button>
+          <a-button @click="resetZoom()">{{ $t('ui.resetZoom') }}</a-button>
         </a-space>
       </div>
       <a-divider orientation="left" orientation-margin="0px">
-        Background Image
+        {{ $t('ui.backgroundImage') }}
       </a-divider>
       <a-upload v-model:file-list="uploadedImageList" list-type="picture" accept="image/*"
         :beforeUpload="handleBeforeUploadImage" @remove="handleRemoveImage">
         <a-button>
           <upload-outlined></upload-outlined>
-          Upload Image
+          {{ $t('ui.uploadImage') }}
         </a-button>
         <template #itemRender="{ file, actions }">
           <a-card class="uploaded-file-item">
@@ -957,26 +957,26 @@ export default defineComponent({
         </template>
       </a-upload>
       <a-divider orientation="left" orientation-margin="0px">
-        Pose Control
+        {{ $t('ui.poseControl') }}
       </a-divider>
       <a-space>
         <a-button @click="addDefaultPerson">
           <plus-square-outlined />
-          Add Person
+          {{ $t('ui.addPerson') }}
         </a-button>
         <a-upload accept="application/json" :beforeUpload="handleBeforeUploadJson" :showUploadList="false">
           <a-button>
             <upload-outlined></upload-outlined>
-            Upload JSON
+            {{ $t('ui.uploadJSON') }}
           </a-button>
         </a-upload>
         <a-button @click="downloadCanvasAsJson">
           <download-outlined></download-outlined>
-          Download JSON
+          {{ $t('ui.downloadJSON') }}
         </a-button>
         <a-button @click="downloadCanvasAsImage">
           <download-outlined></download-outlined>
-          Download Image
+          {{ $t('ui.downloadImage') }}
         </a-button>
       </a-space>
       <a-collapse accordion :activeKey="activePersonId" @update:activeKey="updateActivePerson">
@@ -985,8 +985,7 @@ export default defineComponent({
           <template #extra-control>
             <!-- TODO: make this repetitive code a component. -->
             <div v-if="person.left_hand === undefined">
-              <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">Add left
-                hand</a-button>
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">{{ $t('ui.addLeftHand') }}</a-button>
               <a-upload accept="application/json"
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.LEFT_HAND)"
                 :showUploadList="false">
@@ -996,8 +995,7 @@ export default defineComponent({
               </a-upload>
             </div>
             <div v-if="person.right_hand === undefined">
-              <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">Add right
-                hand</a-button>
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">{{ $t('ui.addRightHand') }}</a-button>
               <a-upload accept="application/json"
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.RIGHT_HAND)"
                 :showUploadList="false">
@@ -1011,7 +1009,7 @@ export default defineComponent({
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.FACE)"
                 :showUploadList="false">
                 <a-button>
-                  Add Face
+                  {{ $t('ui.addFace') }}
                   <upload-outlined></upload-outlined>
                 </a-button>
               </a-upload>
