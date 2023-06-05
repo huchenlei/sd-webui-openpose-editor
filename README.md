@@ -14,7 +14,7 @@ Github. Check whether `stable-diffusion-webui\extensions\sd-webui-openpose-edito
 exists and has content in it. 
 
 Some users in China have reported having issue downloading dist with the autoupdate
-script. In such situtations, the user has 2 following options to download dist
+script. In such situtations, the user has 2 following options to get dist
 manually:
 
 ### Option1: Build the application 
