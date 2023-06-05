@@ -6,17 +6,26 @@ WebUI's ControlNet extension.
 ![editor_in_modal](/readme_assets/editor_in_modal.png)
 
 # Installation
+![installation_guide](/readme_assets/install_guide.png)
+![restart_ui_guide](/readme_assets/restart_ui_guide.png)
+
+On UI restart, the extension will try to download the compiled Vue app from
+Github. Check whether `stable-diffusion-webui\extensions\sd-webui-openpose-editor\dist`
+exists and has content in it. 
+
+Some users in China have reported having issue downloading dist with the autoupdate
+script. In such situtations, the user has 2 following options to download dist
+manually:
+
 ### Option1: Build the application 
 Make sure you have nodeJS environment ready and follow `Development` section.
 Run `npm run build` to compile the application.
 
-### Option2: Download the compiled application (Recommended)
-This is automatically done by `script.py` now. If you want a specific version,
-you can still download the compiled application from the release page. 
+### Option2: Download the compiled application
+You can download the compiled application(`dist.zip`) from the 
+[release](https://github.com/huchenlei/sd-webui-openpose-editor/releases) page. 
 Unzip the package in the repository root and make sure hte unziped directory is 
-named `dist`. Some users in China have reported that the auto-update script 
-not working for them. In this situation, the user can either manually download
-dist.zip from Github or follow Option1.
+named `dist`.
 
 # Usage
 The openpose editor core is build with Vue3. The gradio extension script is 
