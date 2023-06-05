@@ -156,7 +156,7 @@ class OpenposeConnection extends fabric.Line {
             transformMatrix
         );
         const globalPoint = new fabric.Point(
-            rawGlobalPoint.x - p.constant_radius / 4, 
+            rawGlobalPoint.x - p.constant_radius / 4,
             rawGlobalPoint.y - p.constant_radius / 4
         );
         if (p === this.k1) {
@@ -349,11 +349,6 @@ class OpenposeBody extends OpenposeObject {
      * ]
      */
     constructor(rawKeypoints: [number, number, number][]) {
-        /* Coco format has 18 keypoints. */
-        if (rawKeypoints.length != 18) {
-            throw `Wrong number of keypoints for openpose body(Coco format). Expect 18 but got ${rawKeypoints.length}.`
-        }
-
         const keypoints = _.zipWith(rawKeypoints, OpenposeBody.colors, OpenposeBody.keypoint_names,
             (p, color, keypoint_name) => new OpenposeKeypoint2D(
                 p[0],
@@ -377,6 +372,15 @@ class OpenposeBody extends OpenposeObject {
             });
 
         super(keypoints, connections);
+    }
+
+    static create(rawKeypoints: [number, number, number][]): OpenposeBody | undefined{
+        if (rawKeypoints.length != 18) {
+            console.warn(
+                `Wrong number of keypoints for openpose body(Coco format). Expect 18 but got ${rawKeypoints.length}.`)
+            return undefined;
+        }
+        return new OpenposeBody(rawKeypoints);
     }
 
     getKeypointByName(name: string): OpenposeKeypoint2D {
@@ -467,6 +471,15 @@ class OpenposeHand extends OpenposeObject {
         super(keypoints, connections);
     }
 
+    static create(rawKeypoints: [number, number, number][]): OpenposeHand | undefined{
+        if (rawKeypoints.length != OpenposeHand.keypoint_names.length) {
+            console.warn(
+                `Wrong number of keypoints for openpose hand. Expect ${OpenposeHand.keypoint_names.length} but got ${rawKeypoints.length}.`)
+            return undefined;
+        }
+        return new OpenposeHand(rawKeypoints)
+    }
+
     /**
      * Size of a hand is calculated as the average connection distance 
      * (all visible connections).
@@ -501,6 +514,15 @@ class OpenposeFace extends OpenposeObject {
                 name
             ));
         super(keypoints, []);
+    }
+
+    static create(rawKeypoints: [number, number, number][]): OpenposeFace | undefined{
+        if (rawKeypoints.length != OpenposeFace.keypoint_names.length) {
+            console.warn(
+                `Wrong number of keypoints for openpose face. Expect ${OpenposeFace.keypoint_names.length} but got ${rawKeypoints.length}.`)
+            return undefined;
+        }
+        return new OpenposeFace(rawKeypoints)
     }
 }
 

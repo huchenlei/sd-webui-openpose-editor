@@ -737,17 +737,22 @@ export default defineComponent({
       }
       const canvasHeight = poseJson.canvas_height;
       const canvasWidth = poseJson.canvas_width;
-      return poseJson.people.map(personJson =>
-        new OpenposePerson(null,
-          new OpenposeBody(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight)),
+      return poseJson.people.map((personJson): OpenposePerson | undefined => {
+        const body = OpenposeBody.create(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight));
+        if (body === undefined) {
+          // If body is malformatted, no need to render face/hand.
+          return undefined;
+        }
+        return new OpenposePerson(null,
+          body,
           personJson.hand_left_keypoints_2d ?
-            new OpenposeHand(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+            OpenposeHand.create(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
           personJson.hand_right_keypoints_2d ?
-            new OpenposeHand(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+            OpenposeHand.create(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
           personJson.face_keypoints_2d ?
-            new OpenposeFace(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
+            OpenposeFace.create(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
         )
-      );
+      }).filter(person => person !== undefined) as OpenposePerson[];
     },
     /**
      * Adds a body part from the given JSON file.
