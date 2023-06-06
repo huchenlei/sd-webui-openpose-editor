@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 const messages = {
     en: {
         ui: {
-            sendpose: 'Send pose to ControlNet',
+            sendPose: 'Send pose to ControlNet',
             keybinding: 'Key Bindings',
             canvas: 'Canvas',
             resizeCanvas: 'Resize Canvas',
