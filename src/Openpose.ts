@@ -588,8 +588,8 @@ class OpenposePerson {
         // Scale the hand to fit body size
         const forearm_length = wrist_keypoint.distanceTo(elbow_keypoint);
         const hand_length = hand.size * 4; // There are 4 connections from wrist_joint to any fingertips.
-        // Approximate hand size as 50% of forearm length.
-        let scaleRatio = forearm_length * 0.5 / hand_length;
+        // Approximate hand size as 70% of forearm length.
+        let scaleRatio = forearm_length * 0.7 / hand_length;
         hand.group!.scale(scaleRatio);
     }
 
