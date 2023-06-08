@@ -34,8 +34,8 @@ const messages = {
             uploadJSON: '上传JSON',
             downloadJSON: '下载JSON',
             downloadImage: '下载图片',
-            addLeftHand: '添加右手',
-            addRightHand: '添加左手',
+            addLeftHand: '添加左手',
+            addRightHand: '添加右手',
             addFace: '添加脸部',
         }
     }
