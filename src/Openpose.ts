@@ -374,12 +374,14 @@ class OpenposeBody extends OpenposeObject {
         super(keypoints, connections);
     }
 
-    static create(rawKeypoints: [number, number, number][]): OpenposeBody | undefined{
-        if (rawKeypoints.length != 18) {
+    static create(rawKeypoints: [number, number, number][]): OpenposeBody | undefined {
+        if (rawKeypoints.length < OpenposeBody.keypoint_names.length) {
             console.warn(
-                `Wrong number of keypoints for openpose body(Coco format). Expect 18 but got ${rawKeypoints.length}.`)
+                `Wrong number of keypoints for openpose body(Coco format). 
+                Expect ${OpenposeBody.keypoint_names.length} but got ${rawKeypoints.length}.`)
             return undefined;
         }
+        rawKeypoints.slice(0, OpenposeBody.keypoint_names.length);
         return new OpenposeBody(rawKeypoints);
     }
 
@@ -471,13 +473,14 @@ class OpenposeHand extends OpenposeObject {
         super(keypoints, connections);
     }
 
-    static create(rawKeypoints: [number, number, number][]): OpenposeHand | undefined{
-        if (rawKeypoints.length != OpenposeHand.keypoint_names.length) {
+    static create(rawKeypoints: [number, number, number][]): OpenposeHand | undefined {
+        if (rawKeypoints.length < OpenposeHand.keypoint_names.length) {
             console.warn(
                 `Wrong number of keypoints for openpose hand. Expect ${OpenposeHand.keypoint_names.length} but got ${rawKeypoints.length}.`)
             return undefined;
         }
-        return new OpenposeHand(rawKeypoints)
+        rawKeypoints.slice(0, OpenposeHand.keypoint_names.length);
+        return new OpenposeHand(rawKeypoints);
     }
 
     /**
@@ -516,13 +519,14 @@ class OpenposeFace extends OpenposeObject {
         super(keypoints, []);
     }
 
-    static create(rawKeypoints: [number, number, number][]): OpenposeFace | undefined{
-        if (rawKeypoints.length != OpenposeFace.keypoint_names.length) {
+    static create(rawKeypoints: [number, number, number][]): OpenposeFace | undefined {
+        if (rawKeypoints.length < OpenposeFace.keypoint_names.length) {
             console.warn(
                 `Wrong number of keypoints for openpose face. Expect ${OpenposeFace.keypoint_names.length} but got ${rawKeypoints.length}.`)
             return undefined;
         }
-        return new OpenposeFace(rawKeypoints)
+        rawKeypoints.slice(0, OpenposeFace.keypoint_names.length);
+        return new OpenposeFace(rawKeypoints);
     }
 }
 
