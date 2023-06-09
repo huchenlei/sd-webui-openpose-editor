@@ -5,6 +5,9 @@ WebUI's ControlNet extension.
 
 ![editor_in_modal](/readme_assets/editor_in_modal.png)
 
+# Prerequisite
+[ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`+
+
 # Installation
 ![installation_guide](/readme_assets/install_guide.png)
 ![restart_ui_guide](/readme_assets/restart_ui_guide.png)
