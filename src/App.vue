@@ -416,11 +416,13 @@ export default defineComponent({
 
       // Panning handler.
       let panning = false;
-      let spacePressed = false;
+      let panningEnabled = false;
+      // Enable panning by press SPACE or F because some users report SPACE
+      // scrolls the iframe despite `e.preventDefault` is called. Issue #7.
       // Add keydown event to document
       document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
-          spacePressed = true;
+        if (e.code === 'Space' || e.code === 'KeyF') {
+          panningEnabled = true;
           this.canvas!.selection = false;
           // Prevent default behaviour of Space which is scroll the page down.
           e.preventDefault();
@@ -429,15 +431,15 @@ export default defineComponent({
 
       // Add keyup event to document
       document.addEventListener('keyup', (e) => {
-        if (e.code === 'Space') {
-          spacePressed = false;
+        if (e.code === 'Space' || e.code === 'KeyF') {
+          panningEnabled = false;
           this.canvas!.selection = true;
         }
       });
 
       // Attach the mouse down event to start panning
       this.canvas.on('mouse:down', (opt: fabric.IEvent) => {
-        if (spacePressed) {
+        if (panningEnabled) {
           panning = true;
         }
       });
@@ -920,7 +922,7 @@ export default defineComponent({
       </a-divider>
       <a-descriptions :column="1">
         <a-descriptions-item label="Drag Mouse">Select ungrouped keypoints for rotation/scale/skew</a-descriptions-item>
-        <a-descriptions-item label="SPACE + Drag Mouse">Hold key to pan the canvas</a-descriptions-item>
+        <a-descriptions-item label="(SPACE | F) + Drag Mouse">Hold key to pan the canvas</a-descriptions-item>
         <a-descriptions-item label="Mouse wheel">Zoom in/out</a-descriptions-item>
       </a-descriptions>
       <a-divider orientation="left" orientation-margin="0px">
