@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 import modules.script_callbacks as script_callbacks
-from modules import shared
+from modules import shared, scripts
 
 
 class Item(BaseModel):
@@ -21,8 +21,8 @@ class Item(BaseModel):
     pose: str
 
 
-EXTENSION_DIR = "extensions/sd-webui-openpose-editor"
-DIST_DIR = f"{EXTENSION_DIR}/dist"
+EXTENSION_DIR = scripts.basedir()
+DIST_DIR = os.path.join(EXTENSION_DIR, 'dist')
 
 
 def get_latest_release(owner, repo) -> Optional[str]:
