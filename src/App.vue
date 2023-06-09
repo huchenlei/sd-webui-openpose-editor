@@ -9,11 +9,6 @@ import LockSwitch from './components/LockSwitch.vue';
 import _ from 'lodash';
 import CryptoJS from 'crypto-js';
 
-/* 
-Dev TODO List:
-- [Optional] bind hand/face to body keypoint so that when certain body keypoint moves, hand/face also moves
- */
-
 interface LockableUploadFile extends UploadFile {
   locked: boolean;
   scale: number;
