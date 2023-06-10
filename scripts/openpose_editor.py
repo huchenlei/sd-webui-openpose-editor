@@ -76,6 +76,16 @@ def download_latest_release(owner, repo):
         print(f"Could not get the latest release or there are no assets {url}.")
 
 
+def need_update(current_version: Optional[str], package_version: str) -> bool:
+    if current_version is None:
+        return True
+    
+    def parse_version(version: str):
+        return tuple(int(num) for num in version[1:].split('.'))
+    
+    return parse_version(current_version) < parse_version(package_version)
+
+
 def update_app():
     """Attempts to update the application to latest version"""
     owner = "huchenlei"
@@ -85,7 +95,7 @@ def update_app():
     current_version = get_current_release()
 
     assert package_version is not None
-    if current_version is None or current_version < package_version:
+    if need_update(current_version, package_version):
         download_latest_release(owner, repo)
 
 
