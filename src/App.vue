@@ -458,6 +458,13 @@ export default defineComponent({
         const message = event.data as IncomingFrameMessage;
         this.loadCanvasFromFrameMessage(message);
       });
+      
+      // Inform the parent frame that iframe is ready to receive message.
+      if (window.self != window.top) {
+        window.parent.postMessage({
+          ready: true
+        }, '*');
+      }
     });
   },
   methods: {
