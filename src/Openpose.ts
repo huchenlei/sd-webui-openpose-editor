@@ -1,3 +1,4 @@
+import { toRaw, markRaw } from 'vue';
 import { fabric } from 'fabric';
 import _ from 'lodash';
 
@@ -58,6 +59,8 @@ class OpenposeKeypoint2D extends fabric.Circle {
         if (key === 'scaleX' || key === 'scaleY') {
             super._set('scaleX', 1);
             super._set('scaleY', 1);
+            super._set('skewX', 0);
+            super._set('skewY', 0);
         } else {
             super._set(key, value);
         }
@@ -222,10 +225,10 @@ class OpenposeObject {
     }
 
     removeFromCanvas(canvas: fabric.Canvas) {
-        this.keypoints.forEach(p => canvas.remove(p));
-        this.connections.forEach(c => canvas.remove(c));
+        this.keypoints.forEach(p => canvas.remove(toRaw(p)));
+        this.connections.forEach(c => canvas.remove(toRaw(c)));
         if (this.grouped) {
-            canvas.remove(this.group!);
+            canvas.remove(toRaw(this.group!));
         }
         this.canvas = undefined;
     }
@@ -240,7 +243,7 @@ class OpenposeObject {
         if (this.canvas === undefined)
             throw 'Cannot group object as the object is not on canvas yet. Call `addToCanvas` first.'
 
-        const objects = [...this.keypoints, ...this.connections];
+        const objects = [...this.keypoints, ...this.connections].map(o => toRaw(o));
 
         // Get all the objects as selection
         var sel = new fabric.ActiveSelection(objects, {
@@ -255,7 +258,7 @@ class OpenposeObject {
         this.canvas.setActiveObject(sel);
 
         // Group the objects
-        this.group = sel.toGroup();
+        this.group = markRaw(sel.toGroup());
     }
 
     ungroup() {
@@ -270,12 +273,17 @@ class OpenposeObject {
 
         // Need to refresh every connection, as their coords information are outdated once ungrouped
         this.connections.forEach(c => {
-            // The scale applied on the group will also apply on each connection. Reset
-            // the scaling factor to 1 when ungrouping so that connection's behaviour 
+            // The scale/rotation/skew applied on the group will also apply on each connection. 
+            // Reset everything to 1 when ungrouping so that connection's behaviour 
             // do not change.
             c.set({
                 scaleX: 1.0,
                 scaleY: 1.0,
+                angle: 0,
+                skewX: 0,
+                skewY: 0,
+                flipX: false,
+                flipY: false,                
             });
             c.updateAll(IDENTITY_MATRIX);
         });

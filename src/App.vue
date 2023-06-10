@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type UnwrapRef, reactive, ref } from 'vue';
+import { defineComponent, type UnwrapRef, reactive, markRaw } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
@@ -337,10 +337,11 @@ export default defineComponent({
   },
   mounted() {
     this.$nextTick(() => {
-      this.canvas = new fabric.Canvas(<HTMLCanvasElement>this.$refs.editorCanvas, {
+      this.canvas = markRaw(new fabric.Canvas(<HTMLCanvasElement>this.$refs.editorCanvas, {
         backgroundColor: '#000',
         preserveObjectStacking: true,
-      });
+      }));
+
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
       // By default have a example person.
       this.addDefaultPerson();
@@ -982,7 +983,8 @@ export default defineComponent({
           <template #extra-control>
             <!-- TODO: make this repetitive code a component. -->
             <div v-if="person.left_hand === undefined">
-              <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">{{ $t('ui.addLeftHand') }}</a-button>
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">{{ $t('ui.addLeftHand')
+              }}</a-button>
               <a-upload accept="application/json"
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.LEFT_HAND)"
                 :showUploadList="false">
@@ -992,7 +994,8 @@ export default defineComponent({
               </a-upload>
             </div>
             <div v-if="person.right_hand === undefined">
-              <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">{{ $t('ui.addRightHand') }}</a-button>
+              <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">{{ $t('ui.addRightHand')
+              }}</a-button>
               <a-upload accept="application/json"
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.RIGHT_HAND)"
                 :showUploadList="false">
