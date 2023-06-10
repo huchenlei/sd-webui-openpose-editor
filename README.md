@@ -61,15 +61,8 @@ up the openpose editor in a modal. After the edit, clicking the
     Effectively this is how you remove a limb segment in the editor.
 1. Group toggle
     - If you don't want to accidentally select and modify the keypoint of an 
-    canvas object (hand/face/body). You can group them.
-    - Note: If you group the object, you will not be able to rotate/scale the group.
-    The only operation the group accepts is move. This is an issue with `fabric.js`.
-    If anyone find a solution, I am willing to adjust the implementation. In order
-    to rotate/scale multiple keypoints, currently the user has to select keypoints
-    and rotate/scale the selection.
-
-Here is a demo showing the difference between group and selection:
-[![group vs selection](http://img.youtube.com/vi/16j20-pkSNU/0.jpg)](http://www.youtube.com/watch?v=16j20-pkSNU)
+    canvas object (hand/face/body). You can group them. The grouped object will
+    act like it is a single object. You can scale, rotate, skew the group.
 
 # Development
 ## Recommended IDE Setup
