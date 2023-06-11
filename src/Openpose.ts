@@ -10,6 +10,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
     confidence: number;
     name: string;
     connections: Array<OpenposeConnection>;
+    selected: boolean;
     selected_in_group: boolean;
     constant_radius: number;
 
@@ -33,6 +34,7 @@ class OpenposeKeypoint2D extends fabric.Circle {
         this.name = name;
         this.connections = [];
         this.id = OpenposeKeypoint2D.idCounter++;
+        this.selected = false;
         this.selected_in_group = false;
         this.constant_radius = constant_radius;
 

@@ -349,26 +349,26 @@ export default defineComponent({
       this.addDefaultPerson();
 
       const selectionHandler = (event: fabric.IEvent<MouseEvent>) => {
-        // Excluding the selection/deselection event of single keypoint,
-        // as they will not create a selection box, and affect the coords
-        // of keypoint.
-        // When selected, coords of keypoint become relative value to the 
-        // selection group center if there are more than 1 point in the 
-        // selection group.
         if (event.selected) {
-          if (event.selected.length === 1) return;
-
           event.selected
             .filter(o => o instanceof OpenposeKeypoint2D)
-            .forEach(p => this.getKeypointProxy(p as OpenposeKeypoint2D).selected_in_group = true);
+            .forEach(p => {
+              const proxy = this.getKeypointProxy(p as OpenposeKeypoint2D);
+              if (event.selected!.length > 1)
+                proxy.selected_in_group = true;
+              proxy.selected = true;
+            });
         }
 
         if (event.deselected) {
-          if (event.deselected.length === 1) return;
-
           event.deselected
             .filter(o => o instanceof OpenposeKeypoint2D)
-            .forEach(p => this.getKeypointProxy(p as OpenposeKeypoint2D).selected_in_group = false);
+            .forEach(p => {
+              const proxy = this.getKeypointProxy(p as OpenposeKeypoint2D);
+              if (event.deselected!.length > 1)
+                proxy.selected_in_group = false;
+              proxy.selected = false;
+            });
         }
       }
 

@@ -38,3 +38,8 @@
 .ant-space {
     margin-bottom: 5px;
 }
+
+li.keypoint-selected {
+    background-color: #ffdddd; /* A light red for the background */
+    color: #b20000; /* A darker red for the text */
+}

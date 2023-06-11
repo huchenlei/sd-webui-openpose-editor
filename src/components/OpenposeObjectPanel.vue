@@ -4,15 +4,14 @@
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
-            <fire-outlined @click.stop="unjamInvalidKeypoints"
-                v-if="object.hasInvalidKeypoints()"
-                title="Move all invalid keypoints to visible canvas for edit." 
-                class="unjam-button"/>
+            <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
+                title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
             <close-outlined @click="removeObject" class="close-icon" />
         </template>
         <slot name="extra-control"></slot>
         <a-list size="small">
-            <a-list-item v-for="keypoint in object.keypoints" :key="keypoint.id">
+            <a-list-item v-for="keypoint in object.keypoints" :key="keypoint.id"
+                :class="{ 'keypoint-selected': keypoint.selected }">
                 <VisibleSwitch v-model:visible="keypoint._visible" @update:visible="onVisibleChange" />
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
                 <div class="coords-group">
