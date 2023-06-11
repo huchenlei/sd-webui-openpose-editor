@@ -42,6 +42,10 @@ Click `Edit` button at the bottom right corner of the generated image will bring
 up the openpose editor in a modal. After the edit, clicking the 
 `Send pose to ControlNet` button will send back the pose to controlnet.
 
+Following demo shows the basic workflow:
+<!-- https://youtu.be/WEHVpPNIh8M -->
+[![Basic Workflow](http://img.youtube.com/vi/WEHVpPNIh8M/0.jpg)](http://www.youtube.com/watch?v=WEHVpPNIh8M)
+
 # Features
 1. Support for face/hand used in controlnet.
     - The extension recognizes the face/hand objects in the controlnet preprocess
