@@ -398,7 +398,7 @@ export default defineComponent({
         if (event.button !== 3) return;
         if (!(event.target instanceof OpenposeKeypoint2D)) return;
         event.target._visible = false;
-        
+
         this.canvas?.renderAll();
       };
 
@@ -938,6 +938,7 @@ export default defineComponent({
       <a-descriptions :column="1">
         <a-descriptions-item :label="$t('ui.panningKeybinding')">{{ $t('ui.panningDescription') }}</a-descriptions-item>
         <a-descriptions-item :label="$t('ui.zoomKeybinding')">{{ $t('ui.zoomDescription') }}</a-descriptions-item>
+        <a-descriptions-item :label="$t('ui.hideKeybinding')">{{ $t('ui.hideDescription') }}</a-descriptions-item>
       </a-descriptions>
       <a-divider orientation="left" orientation-margin="0px">
         {{ $t('ui.canvas') }}

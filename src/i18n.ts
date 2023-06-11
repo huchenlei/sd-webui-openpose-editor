@@ -22,6 +22,8 @@ const messages = {
             panningDescription: 'Hold key to pan the canvas',
             zoomKeybinding:'Mouse wheel',
             zoomDescription: 'Zoom in/out',
+            hideKeybinding: 'Right click',
+            hideDescription: 'Hide keypoint',
         }
     },
     zh: {
@@ -45,6 +47,8 @@ const messages = {
             panningDescription: '拖动画布',
             zoomKeybinding:'鼠标滚轮',
             zoomDescription: '调整画布缩放',
+            hideKeybinding: '鼠标右键',
+            hideDescription: '隐藏关键点',
         }
     }
 };
