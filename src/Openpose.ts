@@ -63,6 +63,8 @@ class OpenposeKeypoint2D extends fabric.Circle {
             super._set('scaleY', 1);
             super._set('skewX', 0);
             super._set('skewY', 0);
+            super._set('flipX', false);
+            super._set('flipY', false);
         } else {
             super._set(key, value);
         }
