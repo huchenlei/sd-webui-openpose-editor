@@ -470,7 +470,7 @@ export default defineComponent({
         const message = event.data as IncomingFrameMessage;
         this.loadCanvasFromFrameMessage(message);
       });
-      
+
       // Inform the parent frame that iframe is ready to receive message.
       if (window.self != window.top) {
         window.parent.postMessage({
@@ -588,6 +588,8 @@ export default defineComponent({
       this.canvas.requestRenderAll();
     },
     onLockedChange(file: LockableUploadFile, locked: boolean) {
+      file.locked = locked;
+
       const img = this.canvasImageMap.get(file.uid);
       if (!img) return;
 
@@ -964,11 +966,12 @@ export default defineComponent({
         </a-button>
         <template #itemRender="{ file, actions }">
           <a-card class="uploaded-file-item">
-            <LockSwitch v-model:locked="file.locked" @update:locked="onLockedChange(file, $event)" />
+            <LockSwitch :locked="file.locked !== undefined ? file.locked : false"
+              @update:locked="onLockedChange(file, $event)" />
             <img v-if="isImage(file)" :src="file.thumbUrl || file.url" :alt="file.name" class="image-thumbnail" />
             <span>{{ file.name }}</span>
             <a-input-number class="scale-ratio-input" addon-before="scale ratio" @update:value="scaleImage(file, $event)"
-              :min="0" v-model:value="file.scale" :precision="2" />
+              :min="0" :value="file.scale !== undefined ? file.scale : 1.0" :precision="2" />
             <close-outlined @click="actions.remove" class="close-icon" />
           </a-card>
         </template>
