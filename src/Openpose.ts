@@ -197,6 +197,7 @@ class OpenposeObject {
     connections: OpenposeConnection[];
     visible: boolean;
     group: fabric.Group | undefined;
+    _locked: boolean;
     canvas: fabric.Canvas | undefined;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
@@ -204,6 +205,7 @@ class OpenposeObject {
         this.connections = connections;
         this.visible = true;
         this.group = undefined;
+        this._locked = false;
         this.canvas = undefined;
 
         // Negative x, y means invalid keypoint.
@@ -285,14 +287,14 @@ class OpenposeObject {
                 skewX: 0,
                 skewY: 0,
                 flipX: false,
-                flipY: false,                
+                flipY: false,
             });
             c.updateAll(IDENTITY_MATRIX);
         });
     }
 
     set grouped(grouped: boolean) {
-        if (this.grouped === grouped) {
+        if (this.grouped === grouped || this.locked) {
             return;
         }
 
@@ -305,6 +307,42 @@ class OpenposeObject {
 
     get grouped(): boolean {
         return this.group !== undefined;
+    }
+
+    lockObject() {
+        this.grouped = true;
+        this.group!.set({
+            selectable: false,
+            evented: false,
+            hasControls: false,
+            hasBorders: false,
+        });
+        this._locked = true;
+    }
+
+    unlockObject() {
+        this.grouped = true;
+        this.group!.set({
+            selectable: true,
+            evented: true,
+            hasControls: true,
+            hasBorders: true,
+        });
+        this._locked = false;
+    }
+
+    set locked(locked: boolean) {
+        if (this.locked === locked) return;
+
+        if (locked) {
+            this.lockObject();
+        } else {
+            this.unlockObject();
+        }
+    }
+
+    get locked() {
+        return this._locked;
     }
 };
 

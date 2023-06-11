@@ -3,6 +3,7 @@
         <template #header>
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
+            <LockSwitch v-model:locked="object.locked"/>
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
                 title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
@@ -28,6 +29,7 @@
 <script lang="ts">
 import { OpenposeKeypoint2D, OpenposeObject } from '../Openpose';
 import VisibleSwitch from './VisibleSwitch.vue';
+import LockSwitch from './LockSwitch.vue';
 import GroupSwitch from './GroupSwitch.vue';
 import { CloseOutlined, FireOutlined } from '@ant-design/icons-vue';
 
@@ -130,6 +132,7 @@ export default {
     components: {
         VisibleSwitch,
         GroupSwitch,
+        LockSwitch,
         CloseOutlined,
         FireOutlined,
     }
