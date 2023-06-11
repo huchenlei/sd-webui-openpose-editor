@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, type UnwrapRef, reactive, markRaw } from 'vue';
+import { defineComponent, type UnwrapRef, reactive, markRaw, toRaw } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
@@ -713,7 +713,7 @@ export default defineComponent({
     handleRemoveImage(image: UploadFile) {
       if (!this.canvasImageMap.has(image.uid)) return;
 
-      this.canvas?.remove(this.canvasImageMap.get(image.uid)!);
+      this.canvas?.remove(toRaw(this.canvasImageMap.get(image.uid)!));
       this.canvas?.renderAll();
     },
     scaleImage(image: LockableUploadFile, scale: number) {
