@@ -340,6 +340,8 @@ export default defineComponent({
       this.canvas = markRaw(new fabric.Canvas(<HTMLCanvasElement>this.$refs.editorCanvas, {
         backgroundColor: '#000',
         preserveObjectStacking: true,
+        fireRightClick: true,
+        stopContextMenu: true,
       }));
 
       this.resizeCanvas(this.canvasWidth, this.canvasHeight);
@@ -391,12 +393,22 @@ export default defineComponent({
         this.canvas?.renderAll();
       };
 
+      const hideKeypointHandler = (event: fabric.IEvent<MouseEvent>) => {
+        // Only handles right click events.
+        if (event.button !== 3) return;
+        if (!(event.target instanceof OpenposeKeypoint2D)) return;
+        event.target._visible = false;
+        
+        this.canvas?.renderAll();
+      };
+
       this.canvas.on('object:moving', keypointMoveHandler);
       this.canvas.on('object:scaling', keypointMoveHandler);
       this.canvas.on('object:rotating', keypointMoveHandler);
       this.canvas.on('selection:created', selectionHandler);
       this.canvas.on('selection:cleared', selectionHandler);
       this.canvas.on('selection:updated', selectionHandler);
+      this.canvas.on('mouse:down', hideKeypointHandler);
 
       // Zoom handler.
       this.canvas.on('mouse:wheel', (opt: fabric.IEvent<WheelEvent>) => {
