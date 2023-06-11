@@ -924,9 +924,8 @@ export default defineComponent({
         {{ $t('ui.keybinding') }}
       </a-divider>
       <a-descriptions :column="1">
-        <a-descriptions-item label="Drag Mouse">Select ungrouped keypoints for rotation/scale/skew</a-descriptions-item>
-        <a-descriptions-item label="(SPACE | F) + Drag Mouse">Hold key to pan the canvas</a-descriptions-item>
-        <a-descriptions-item label="Mouse wheel">Zoom in/out</a-descriptions-item>
+        <a-descriptions-item :label="$t('ui.panningKeybinding')">{{ $t('ui.panningDescription') }}</a-descriptions-item>
+        <a-descriptions-item :label="$t('ui.zoomKeybinding')">{{ $t('ui.zoomDescription') }}</a-descriptions-item>
       </a-descriptions>
       <a-divider orientation="left" orientation-margin="0px">
         {{ $t('ui.canvas') }}

@@ -18,6 +18,10 @@ const messages = {
             addLeftHand: 'Add left hand',
             addRightHand: 'Add right hand',
             addFace: 'Add face',
+            panningKeybinding: '(SPACE | F) + Drag Mouse',
+            panningDescription: 'Hold key to pan the canvas',
+            zoomKeybinding:'Mouse wheel',
+            zoomDescription: 'Zoom in/out',
         }
     },
     zh: {
@@ -37,6 +41,10 @@ const messages = {
             addLeftHand: '添加左手',
             addRightHand: '添加右手',
             addFace: '添加脸部',
+            panningKeybinding: '(空格 或 F) + 拖动鼠标',
+            panningDescription: '拖动画布',
+            zoomKeybinding:'鼠标滚轮',
+            zoomDescription: '调整画布缩放',
         }
     }
 };
