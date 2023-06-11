@@ -34,7 +34,7 @@ named `dist`.
 The openpose editor core is build with Vue3. The gradio extension script is 
 a thin wrapper that mounts the Vue3 Application on `/openpose_editor_index`.
 
-The user can directly access the editor at `localhost:7680/openpose_editor_index`
+The user can directly access the editor at `localhost:7860/openpose_editor_index`
 if desired, but the main entry point is invoking the editor in the ControlNet 
 extension. In ControlNet extension, select any openpose preprocessor, and hit
 the run preprocessor button. A preprocessor result preview will be genereated.
