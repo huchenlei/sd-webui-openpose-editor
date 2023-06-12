@@ -12,7 +12,7 @@ export default defineConfig({
     ? '/openpose_editor/'
     : '/',
   plugins: [
-    vue(), 
+    vue(),
     vueJsx(),
     {
       name: 'create-version-file',
@@ -26,5 +26,5 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
+  },
 })
