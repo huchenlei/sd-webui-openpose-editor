@@ -1,9 +1,13 @@
 # Openpose Editor for ControlNet in Stable Diffusion WebUI
-
 This extension is specifically build to be integrated into Stable Diffusion 
 WebUI's ControlNet extension.
 
 ![editor_in_modal](/readme_assets/editor_in_modal.png)
+
+# Translations of README.md
+- [English](./README.md)
+- [Chinese](./README.zh.md)
+- [Japanese](./README.ja.md)
 
 # Prerequisite
 [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`+
@@ -40,7 +44,7 @@ extension. In ControlNet extension, select any openpose preprocessor, and hit
 the run preprocessor button. A preprocessor result preview will be genereated.
 Click `Edit` button at the bottom right corner of the generated image will bring
 up the openpose editor in a modal. After the edit, clicking the 
-`Send pose to ControlNet` button will send back the pose to controlnet.
+`Send pose to ControlNet` button will send back the pose to ControlNet.
 
 Following demo shows the basic workflow:
 <!-- https://youtu.be/WEHVpPNIh8M -->
