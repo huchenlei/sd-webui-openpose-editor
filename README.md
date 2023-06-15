@@ -3,7 +3,6 @@ This extension is specifically build to be integrated into Stable Diffusion
 WebUI's ControlNet extension.
 
 ![editor_in_modal](/readme_assets/editor_in_modal.png)
-![editor_in_modal_dark](/readme_assets/editor_in_modal_dark.png)
 
 # Translations of README.md
 - [English](./README.md)
