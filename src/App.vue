@@ -327,7 +327,6 @@ export default defineComponent({
       canvas: null,
       openposeCanvas: new fabric.Rect({
         fill: "#000",
-        borderColor: '#450000',
         selectable: false,
         evented: false,
       }),
@@ -355,6 +354,8 @@ export default defineComponent({
       const htmlCanvasHeight = Math.round(htmlCanvasWidth * 2 / 3);
       this.resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
       this.canvas.add(this.openposeCanvas);
+      // The openpose canvas should be at last layer.
+      this.canvas.moveTo(this.openposeCanvas, 0);
       this.resizeOpenposeCanvas(this.canvasWidth, this.canvasHeight);
 
       // By default have a example person.
@@ -503,7 +504,7 @@ export default defineComponent({
     },
     addPerson(newPerson: OpenposePerson) {
       this.people.set(newPerson.id, newPerson);
-      newPerson.addToCanvas(this.canvas!);
+      newPerson.addToCanvas(this.openposeCanvas);
       // Add the reactive keypoints to the keypointMap
       newPerson.allKeypoints().forEach((keypoint) => {
         this.keypointMap.set(keypoint.id, reactive(keypoint));
@@ -521,7 +522,7 @@ export default defineComponent({
       }
 
       this.people.delete(person.id);
-      person.removeFromCanvas(this.canvas!);
+      person.removeFromCanvas();
       // Remove the reactive keypoints from the keypointMap
       person.allKeypoints().forEach((keypoint) => {
         this.keypointMap.delete(keypoint.id);
@@ -545,7 +546,7 @@ export default defineComponent({
       this.addObject(person, part, target);
     },
     addObject(person: OpenposePerson, part: OpenposeBodyPart, target: OpenposeObject) {
-      target.addToCanvas(this.canvas!);
+      target.addToCanvas(this.openposeCanvas);
       target.keypoints.forEach(keypoint => {
         this.keypointMap.set(keypoint.id, reactive(keypoint));
       });
@@ -582,7 +583,7 @@ export default defineComponent({
 
       if (!target) return;
 
-      target.removeFromCanvas(this.canvas!);
+      target.removeFromCanvas();
       target.keypoints.forEach(keypoint => {
         this.keypointMap.delete(keypoint.id);
       });
@@ -712,8 +713,8 @@ export default defineComponent({
     loadBackgroundImageFromURL(url: string) {
       fabric.Image.fromURL(url, (img) => {
         img.set({
-          left: 0,
-          top: 0,
+          left: this.openposeCanvas.left,
+          top: this.openposeCanvas.top,
           scaleX: 1.0,
           scaleY: 1.0,
           opacity: 0.5,
@@ -725,7 +726,7 @@ export default defineComponent({
 
         this.canvas?.add(img);
         // Image should not block skeleton.
-        this.canvas?.moveTo(img, 0);
+        this.canvas?.moveTo(img, 1);
         this.canvas?.renderAll();
 
         const uploadFile = this.uploadedImageList[this.uploadedImageList.length - 1];

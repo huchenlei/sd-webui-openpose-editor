@@ -201,6 +201,7 @@ class OpenposeObject {
     group: fabric.Group | undefined;
     _locked: boolean;
     canvas: fabric.Canvas | undefined;
+    openposeCanvas: fabric.Rect | undefined;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
         this.keypoints = keypoints;
@@ -209,6 +210,7 @@ class OpenposeObject {
         this.group = undefined;
         this._locked = false;
         this.canvas = undefined;
+        this.openposeCanvas = undefined;
 
         // Negative x, y means invalid keypoint.
         this.keypoints.forEach(keypoint => {
@@ -224,23 +226,44 @@ class OpenposeObject {
         return this.invalidKeypoints().length > 0;
     }
 
-    addToCanvas(canvas: fabric.Canvas) {
-        this.keypoints.forEach(p => canvas.add(p));
-        this.connections.forEach(c => canvas.add(c));
-        this.canvas = canvas;
+    addToCanvas(openposeCanvas: fabric.Rect) {
+        this.canvas = openposeCanvas.canvas;
+        this.openposeCanvas = openposeCanvas;
+
+        this.keypoints.forEach(p => {
+            p.x += openposeCanvas.left!;
+            p.y += openposeCanvas.top!;
+            this.canvas?.add(p);
+            p.updateConnections(IDENTITY_MATRIX);
+        });
+
+        this.connections.forEach(c => {
+            this.canvas?.add(c)
+        });
     }
 
-    removeFromCanvas(canvas: fabric.Canvas) {
-        this.keypoints.forEach(p => canvas.remove(toRaw(p)));
-        this.connections.forEach(c => canvas.remove(toRaw(c)));
+    removeFromCanvas() {
+        this.keypoints.forEach(p => this.canvas?.remove(toRaw(p)));
+        this.connections.forEach(c => this.canvas?.remove(toRaw(c)));
         if (this.grouped) {
-            canvas.remove(toRaw(this.group!));
+            this.canvas?.remove(toRaw(this.group!));
         }
         this.canvas = undefined;
     }
 
     serialize(): number[] {
-        return _.flatten(this.keypoints.map(p => p._visible ? [p.abs_x, p.abs_y, 1.0] : [0.0, 0.0, 0.0]));
+        const openposeCanvas = this.openposeCanvas;
+        
+        if (openposeCanvas === undefined)
+            return [];
+
+        return _.flatten(this.keypoints.map(p =>
+            p._visible ? [
+                p.abs_x - openposeCanvas.left!,
+                p.abs_y - openposeCanvas.top!,
+                1.0
+            ] : [0.0, 0.0, 0.0]
+        ));
     }
 
     makeGroup() {
@@ -611,12 +634,12 @@ class OpenposePerson {
         this.name = name == null ? `Person ${this.id}` : name;
     }
 
-    addToCanvas(canvas: fabric.Canvas) {
-        [this.body, this.left_hand, this.right_hand, this.face].forEach(o => o?.addToCanvas(canvas));
+    addToCanvas(openposeCanvas: fabric.Rect) {
+        [this.body, this.left_hand, this.right_hand, this.face].forEach(o => o?.addToCanvas(openposeCanvas));
     }
 
-    removeFromCanvas(canvas: fabric.Canvas) {
-        [this.body, this.left_hand, this.right_hand, this.face].forEach(o => o?.removeFromCanvas(canvas));
+    removeFromCanvas() {
+        [this.body, this.left_hand, this.right_hand, this.face].forEach(o => o?.removeFromCanvas());
     }
 
     allKeypoints(): OpenposeKeypoint2D[] {
