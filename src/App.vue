@@ -23,6 +23,7 @@ interface AppData {
   people: Map<number, OpenposePerson>;
   keypointMap: Map<number, UnwrapRef<OpenposeKeypoint2D>>,
   canvas: fabric.Canvas | null;
+  openposeCanvas: fabric.Rect;
 
   // Fields for uploaded background images.
   uploadedImageList: LockableUploadFile[];
@@ -324,6 +325,12 @@ export default defineComponent({
       hideInvisibleKeypoints: false,
       people: new Map<number, OpenposePerson>(),
       canvas: null,
+      openposeCanvas: new fabric.Rect({
+        fill: "#000",
+        borderColor: '#450000',
+        selectable: false,
+        evented: false,
+      }),
       keypointMap: new Map<number, UnwrapRef<OpenposeKeypoint2D>>(),
       uploadedImageList: [],
       canvasImageMap: new Map<string, fabric.Image>(),
@@ -338,13 +345,18 @@ export default defineComponent({
   mounted() {
     this.$nextTick(() => {
       this.canvas = markRaw(new fabric.Canvas(<HTMLCanvasElement>this.$refs.editorCanvas, {
-        backgroundColor: '#000',
+        backgroundColor: '#222222',
         preserveObjectStacking: true,
         fireRightClick: true,
         stopContextMenu: true,
       }));
 
-      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.9);
+      const htmlCanvasHeight = Math.round(htmlCanvasWidth * 2 / 3);
+      this.resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
+      this.canvas.add(this.openposeCanvas);
+      this.resizeOpenposeCanvas(this.canvasWidth, this.canvasHeight);
+
       // By default have a example person.
       this.addDefaultPerson();
 
@@ -579,12 +591,25 @@ export default defineComponent({
       }
       this.canvas?.renderAll();
     },
-    resizeCanvas(newWidth: number, newHeight: number) {
+    // HTML canvas is the real canvas object.
+    resizeHTMLCanvas(newWidth: number, newHeight: number) {
       if (!this.canvas)
         return;
       this.canvas.setWidth(newWidth);
-      this.canvas.setHeight(newHeight);
+      this.canvas.setHeight(newHeight); 
       this.canvas.calcOffset();
+      this.canvas.requestRenderAll();
+    },
+    // Openpose canvas is a rect bound on the HTML canvas.
+    resizeOpenposeCanvas(newWidth: number, newHeight: number) {
+      if (!this.canvas)
+        return;
+      this.openposeCanvas.set({
+        width: newWidth,
+        height: newHeight,
+      });
+      this.canvas.centerObject(this.openposeCanvas);
+      this.openposeCanvas.setCoords();
       this.canvas.requestRenderAll();
     },
     onLockedChange(file: LockableUploadFile, locked: boolean) {
@@ -823,7 +848,7 @@ export default defineComponent({
       const canvasWidth = poseJson.canvas_width;
       this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
       this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
-      this.resizeCanvas(this.canvasWidth, this.canvasHeight);
+      this.resizeOpenposeCanvas(this.canvasWidth, this.canvasHeight);
       this.parseOpenposeJson(poseJson).forEach(person => this.addPerson(person));
     },
     /**
@@ -951,7 +976,7 @@ export default defineComponent({
             :max="4096" />
           <a-input-number type="inputNumber" addon-before="Height" addon-after="px" v-model:value="canvasHeight" :min="64"
             :max="4096" />
-          <a-button @click="resizeCanvas(canvasWidth, canvasHeight)">{{ $t('ui.resizeCanvas') }}</a-button>
+          <a-button @click="resizeOpenposeCanvas(canvasWidth, canvasHeight)">{{ $t('ui.resizeCanvas') }}</a-button>
           <a-button @click="resetZoom()">{{ $t('ui.resetZoom') }}</a-button>
         </a-space>
       </div>
@@ -1051,7 +1076,7 @@ export default defineComponent({
       </a-collapse>
     </a-col>
 
-    <a-col :span="16">
+    <a-col :span="16" ref="editorContainer">
       <canvas ref="editorCanvas"></canvas>
     </a-col>
   </a-row>
