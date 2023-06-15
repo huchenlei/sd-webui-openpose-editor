@@ -43,3 +43,8 @@ li.keypoint-selected {
     background-color: #ffdddd; /* A light red for the background */
     color: #b20000; /* A darker red for the text */
 }
+
+.dark-theme li.keypoint-selected {
+    color: #ffdddd; /* A light red for the text */
+    background-color: #5e0303; /* A darker red for the background */
+}
