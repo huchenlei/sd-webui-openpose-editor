@@ -956,7 +956,7 @@ export default defineComponent({
 
 <template>
   <a-row>
-    <a-col :span="8">
+    <a-col :span="8" id="control-panel">
       <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
         {{ $t('ui.sendPose') }}
       </a-button>
@@ -1077,7 +1077,7 @@ export default defineComponent({
       </a-collapse>
     </a-col>
 
-    <a-col :span="16" ref="editorContainer">
+    <a-col :span="16" id="canvas-panel">
       <canvas ref="editorCanvas"></canvas>
     </a-col>
   </a-row>

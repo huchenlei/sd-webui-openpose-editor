@@ -1,6 +1,9 @@
 @import './base.css';
 
-.visible-switch, .group-switch, .unjam-button, .lock-switch {
+.visible-switch,
+.group-switch,
+.unjam-button,
+.lock-switch {
     padding: 3px;
 }
 
@@ -14,7 +17,9 @@
 }
 
 /* Right align last item in the flex container with `flex-start` */
-.close-icon, .coords-group, .scale-ratio-input {
+.close-icon,
+.coords-group,
+.scale-ratio-input {
     margin-left: auto;
 }
 
@@ -23,13 +28,13 @@
 }
 
 .image-thumbnail {
-    width: 50px; 
-    height: 50px; 
-    object-fit: cover; 
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
     margin-right: 8px;
 }
 
-.uploaded-file-item > div {
+.uploaded-file-item>div {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -40,11 +45,27 @@
 }
 
 li.keypoint-selected {
-    background-color: #ffdddd; /* A light red for the background */
-    color: #b20000; /* A darker red for the text */
+    background-color: #ffdddd;
+    /* A light red for the background */
+    color: #b20000;
+    /* A darker red for the text */
 }
 
 .dark-theme li.keypoint-selected {
-    color: #ffdddd; /* A light red for the text */
-    background-color: #5e0303; /* A darker red for the background */
+    color: #ffdddd;
+    /* A light red for the text */
+    background-color: #5e0303;
+    /* A darker red for the background */
+}
+
+/* Make control-panel scrollable instead of whole page scrollable when
+control-panel's content overflows. */
+#control-panel {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* Hide scroll bar for control-panel. */
+#control-panel::-webkit-scrollbar {
+    display: none;
 }
