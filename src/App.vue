@@ -481,6 +481,9 @@ export default defineComponent({
       // Handle incoming frame message.
       window.addEventListener('message', (event) => {
         const message = event.data as IncomingFrameMessage;
+        if (_.some([message.modalId, message.poseURL, message.imageURL], o => o === undefined)) {
+          this.$notify({ title: 'Error', desc: `Malformed frame message received: ${message}` });
+        }
         this.loadCanvasFromFrameMessage(message);
       });
 
@@ -597,7 +600,7 @@ export default defineComponent({
       if (!this.canvas)
         return;
       this.canvas.setWidth(newWidth);
-      this.canvas.setHeight(newHeight); 
+      this.canvas.setHeight(newHeight);
       this.canvas.calcOffset();
       this.canvas.requestRenderAll();
     },
