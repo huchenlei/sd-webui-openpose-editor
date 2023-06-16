@@ -15,12 +15,12 @@
                 :class="{ 'keypoint-selected': keypoint.selected }">
                 <VisibleSwitch v-model:visible="keypoint._visible" @update:visible="onVisibleChange" />
                 <span :class="{ hidden: !keypoint._visible }">{{ keypoint.name }}</span>
-                <div class="coords-group">
+                <a-space class="coords-group">
                     <a-input-number :value="keypoint.x" @change="onKeypointXChange($event, keypoint)" addon-before="x"
                         :disabled="keypoint.selected_in_group" :precision="2" />
                     <a-input-number :value="keypoint.y" @change="onKeypointYChange($event, keypoint)" addon-before="y"
                         :disabled="keypoint.selected_in_group" :precision="2" />
-                </div>
+                </a-space>
             </a-list-item>
         </a-list>
     </a-collapse-panel>
