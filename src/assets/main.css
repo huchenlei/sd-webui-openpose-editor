@@ -69,3 +69,11 @@ control-panel's content overflows. */
 #control-panel::-webkit-scrollbar {
     display: none;
 }
+
+.ant-space {
+    flex-wrap: wrap;
+}
+
+.ant-input-number {
+    max-width: 100px;
+}
