@@ -670,11 +670,9 @@ export default defineComponent({
           if (target)
             target.grouped = true;
         }
-        this.resetZoom();
       } else {
         const target = person[activeBodyPart]!;
         target.grouped = true;
-        this.zoomToGroup(target.group!, /* zoomed_size=*/ 0.5);
         // Ungroup the object so that user can operate on each individual keypoint.
         target.grouped = false;
       }
