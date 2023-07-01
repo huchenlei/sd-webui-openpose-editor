@@ -838,7 +838,7 @@ export default defineComponent({
             this.addObject(person, part, firstPerson.face);
             break;
         }
-      });
+      }).catch((ex) => this.$notify(ex + ''));
       return false;
     },
     /**
@@ -846,7 +846,9 @@ export default defineComponent({
      * @param file JSON file blob
      */
     handleBeforeUploadJson(file: Blob) {
-      this.readOpenposeJson(file).then(this.loadPeopleFromJson);
+      this.readOpenposeJson(file)
+        .then(this.loadPeopleFromJson)
+        .catch((ex) => this.$notify(ex + ''));
       return false;
     },
     loadPeopleFromJson(poseJson: IOpenposeJson) {
