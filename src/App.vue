@@ -482,10 +482,7 @@ export default defineComponent({
       window.addEventListener('message', (event) => {
         const message = event.data as IncomingFrameMessage;
         if (_.some([message.modalId, message.poseURL, message.imageURL], o => o === undefined)) {
-          this.$notify({
-            title: 'Error',
-            desc: `Malformed frame message received: ${JSON.stringify(message)}.`
-          });
+          console.debug(`Unrecognized frame message received: ${JSON.stringify(message)}.`);
           return;
         }
         this.loadCanvasFromFrameMessage(message);
