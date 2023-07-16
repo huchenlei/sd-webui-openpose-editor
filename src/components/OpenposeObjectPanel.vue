@@ -3,7 +3,7 @@
         <template #header>
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
-            <LockSwitch v-model:locked="object.locked"/>
+            <LockSwitch v-model:locked="object.locked" />
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
                 title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
