@@ -350,8 +350,8 @@ export default defineComponent({
         stopContextMenu: true,
       }));
 
-      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.9);
-      const htmlCanvasHeight = Math.round(htmlCanvasWidth * 2 / 3);
+      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.95);
+      const htmlCanvasHeight = Math.round(window.innerHeight * 0.95);
       this.resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
       this.canvas.add(this.openposeCanvas);
       // The openpose canvas should be at last layer.
