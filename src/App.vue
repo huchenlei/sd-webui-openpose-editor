@@ -934,17 +934,38 @@ export default defineComponent({
     },
     downloadCanvasAsImage() {
       if (!this.canvas) return;
+      this.resetZoom();
+
       // Get the data URL of the canvas as a PNG image
       const dataUrl = this.canvas.toDataURL({ format: 'image/png' });
-      // Create an img element with the data URL
-      const img = document.createElement('img');
-      img.src = dataUrl;
-      // Create a link element with the data URL
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'pose.png';
-      // Trigger a click event on the link to initiate the download
-      link.click();
+
+      // Crop the image.
+      const newCanvas = new fabric.StaticCanvas(null, {
+        width: this.canvasWidth,
+        height: this.canvasHeight,
+      });
+
+      fabric.Image.fromURL(dataUrl, img => {
+        img.set({
+          left: -this.openposeCanvas.left!,
+          top: -this.openposeCanvas.top!,
+        });
+        newCanvas.add(img);
+        newCanvas.renderAll();
+
+        const croppedImageUrl = newCanvas.toDataURL({ format: 'image/png' });
+
+        // Create an img element with the data URL
+        const imgElem = document.createElement('img');
+        imgElem.src = croppedImageUrl;
+
+        // Create a link element with the data URL
+        const link = document.createElement('a');
+        link.href = croppedImageUrl;
+        link.download = 'pose.png';
+        // Trigger a click event on the link to initiate the download
+        link.click();
+      });
     },
   },
   components: {
