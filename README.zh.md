@@ -8,6 +8,9 @@
 需要预先安装[ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`+.
 
 # 安装
+从ControlNet扩展v1.1.411开始，用户不再需要在本地安装此扩展，因为ControlNet扩展现在使用远程端点https://huchenlei.github.io/sd-webui-openpose-editor/，如果未检测到本地编辑器安装。如果您的互联网连接差，或者连接到github.io域名有困难，仍然建议您在本地进行安装。
+
+## 本地安装
 ![installation_guide](/readme_assets/install_guide.png)
 ![restart_ui_guide](/readme_assets/restart_ui_guide.png)
 

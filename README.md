@@ -13,6 +13,13 @@ WebUI's ControlNet extension.
 [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`+
 
 # Installation
+From ControlNet extension v1.1.411, users no longer need to install this
+extension locally, as ControlNet extension now uses the remote endpoint at
+https://huchenlei.github.io/sd-webui-openpose-editor/ if no local editor
+installation is detected. Local installation is still recommended if you have
+poor internet connection, or have hard time connecting to github.io domain.
+
+## Local Installation
 ![installation_guide](/readme_assets/install_guide.png)
 ![restart_ui_guide](/readme_assets/restart_ui_guide.png)
 

@@ -7,6 +7,9 @@
 [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`以上が必要です。
 
 # インストール
+ControlNet拡張v1.1.411から、ユーザーはこの拡張をローカルにインストールする必要はありません。ControlNet拡張は、ローカルのエディタのインストールが検出されない場合、https://huchenlei.github.io/sd-webui-openpose-editor/ というリモートエンドポイントを使用します。インターネット接続が不安定、またはgithub.ioドメインへの接続に問題がある場合は、ローカルインストールを推奨します。
+
+## ローカルインストール
 ![installation_guide](/readme_assets/install_guide.png)
 ![restart_ui_guide](/readme_assets/restart_ui_guide.png)
 
