@@ -4,7 +4,8 @@
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
             <LockSwitch v-model:locked="object.locked" />
-            <FlipOutlined v-if="object.flippable" @click.stop="flipObject" :title="$t('ui.flip')"></FlipOutlined>
+            <FlipOutlined v-if="object.flippable" @click.stop="flipObject" :title="$t('ui.flip')" :class="{ flipDisabled }">
+            </FlipOutlined>
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
                 title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
@@ -34,6 +35,10 @@ import LockSwitch from './LockSwitch.vue';
 import GroupSwitch from './GroupSwitch.vue';
 import FlipOutlined from './FlipOutlined.vue';
 import { CloseOutlined, FireOutlined } from '@ant-design/icons-vue';
+import { fabric } from 'fabric';
+import _ from 'lodash';
+import { message } from 'ant-design-vue';
+import { toRaw } from 'vue';
 
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 
@@ -46,6 +51,11 @@ export default {
         display_name: {
             type: String,
             required: true,
+        },
+    },
+    computed: {
+        flipDisabled() {
+            return this.object.grouped || !this.object.visible || this.object.locked;
         },
     },
     watch: {
@@ -131,6 +141,23 @@ export default {
             this.object.canvas?.renderAll();
         },
         flipObject() {
+            function isKeypointInActiveSelection(keypoint: OpenposeKeypoint2D): boolean {
+                if (!keypoint.canvas) {
+                    return false;
+                }
+                let activeObject = keypoint.canvas.getActiveObject();
+                if (activeObject instanceof fabric.ActiveSelection) {
+                    return activeObject.contains(toRaw(keypoint));
+                }
+                return false;
+            }
+
+            if (this.flipDisabled || _.some(this.object.keypoints,
+                keypoint => isKeypointInActiveSelection(keypoint))) {
+                message.warn('Cannot flip when object is grouped or selected');
+                return;
+            }
+
             this.object.flip();
             this.object.canvas?.renderAll();
         },
@@ -146,3 +173,8 @@ export default {
 };
 </script>
 
+<style scoped>
+.flipDisabled {
+    opacity: 50%;
+}
+</style>
