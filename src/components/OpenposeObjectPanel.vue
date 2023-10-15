@@ -4,8 +4,7 @@
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
             <LockSwitch v-model:locked="object.locked" />
-            <img v-if="object.flippable" @click.stop="flipObject" :title="$t('ui.flip')" src="/flip.svg" alt="flip"
-                style="width: 1em; height: 1em; margin: 3px;">
+            <FlipOutlined v-if="object.flippable" @click.stop="flipObject" :title="$t('ui.flip')"></FlipOutlined>
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
                 title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
@@ -33,6 +32,7 @@ import { OpenposeKeypoint2D, OpenposeObject } from '../Openpose';
 import VisibleSwitch from './VisibleSwitch.vue';
 import LockSwitch from './LockSwitch.vue';
 import GroupSwitch from './GroupSwitch.vue';
+import FlipOutlined from './FlipOutlined.vue';
 import { CloseOutlined, FireOutlined } from '@ant-design/icons-vue';
 
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
@@ -141,6 +141,7 @@ export default {
         LockSwitch,
         CloseOutlined,
         FireOutlined,
+        FlipOutlined,
     }
 };
 </script>
