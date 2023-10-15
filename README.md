@@ -2,12 +2,12 @@
 This extension is specifically build to be integrated into Stable Diffusion 
 WebUI's ControlNet extension.
 
-![editor_in_modal](/readme_assets/editor_in_modal.png)
+![editor](https://github.com/huchenlei/sd-webui-openpose-editor/assets/20929282/c69199e2-5676-4609-87bc-af7499b1c4bd)
 
 # Translations of README.md
 - [English](./README.md)
-- [Chinese](./README.zh.md)
-- [Japanese](./README.ja.md)
+- [中文](./README.zh.md)
+- [日本語](./README.ja.md)
 
 # Prerequisite
 [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) `1.1.216`+
