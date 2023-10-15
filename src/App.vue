@@ -3,6 +3,7 @@ import { defineComponent, type UnwrapRef, reactive, markRaw, toRaw } from 'vue';
 import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
+import Header from './components/Header.vue';
 import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject, type IOpenposeJson, OpenposeBodyPart } from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
@@ -975,6 +976,7 @@ export default defineComponent({
     DownloadOutlined,
     OpenposeObjectPanel,
     LockSwitch,
+    Header,
   }
 });
 </script>
@@ -982,6 +984,7 @@ export default defineComponent({
 <template>
   <a-row>
     <a-col :span="8" id="control-panel">
+      <Header></Header>
       <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
         {{ $t('ui.sendPose') }}
       </a-button>
