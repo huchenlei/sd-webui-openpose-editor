@@ -4,6 +4,8 @@
             <VisibleSwitch v-model:visible="object.visible" @update:visible="onVisibleChange" />
             <GroupSwitch v-model:grouped="object.grouped" />
             <LockSwitch v-model:locked="object.locked" />
+            <img v-if="object.flippable" @click.stop="flipObject" :title="$t('ui.flip')" src="/flip.svg" alt="flip"
+                style="width: 1em; height: 1em; margin: 3px;">
             <span :class="{ hidden: !object.visible }">{{ display_name }}</span>
             <fire-outlined @click.stop="unjamInvalidKeypoints" v-if="object.hasInvalidKeypoints()"
                 title="Move all invalid keypoints to visible canvas for edit." class="unjam-button" />
@@ -127,7 +129,11 @@ export default {
             });
 
             this.object.canvas?.renderAll();
-        }
+        },
+        flipObject() {
+            this.object.flip();
+            this.object.canvas?.renderAll();
+        },
     },
     components: {
         VisibleSwitch,

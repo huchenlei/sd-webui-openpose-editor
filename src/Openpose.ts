@@ -122,6 +122,20 @@ class OpenposeKeypoint2D extends fabric.Circle {
             Math.pow(this.y - other.y, 2)
         );
     }
+
+    swap(other: OpenposeKeypoint2D): void {
+        const otherX = other.x;
+        const otherY = other.y;
+
+        other.x = this.x;
+        other.y = this.y;
+
+        this.x = otherX;
+        this.y = otherY;
+
+        this.setCoords();
+        other.setCoords();
+    }
 };
 
 class OpenposeConnection extends fabric.Line {
@@ -198,6 +212,9 @@ class OpenposeObject {
     _locked: boolean;
     canvas: fabric.Canvas | undefined;
     openposeCanvas: fabric.Rect | undefined;
+
+    // If the object is symmetrical, it should be flippable.
+    flippable: boolean = false;
 
     constructor(keypoints: OpenposeKeypoint2D[], connections: OpenposeConnection[]) {
         this.keypoints = keypoints;
@@ -375,6 +392,25 @@ class OpenposeObject {
     get locked() {
         return this._locked;
     }
+
+    flip() {
+        if (!this.flippable) {
+            throw "The object is not flippable.";
+        }
+
+        const nameMap = _.keyBy(this.keypoints, 'name');
+
+        this.keypoints.forEach(keypoint => {
+            const counterpart: OpenposeKeypoint2D | undefined =
+                nameMap[keypoint.name.replace('left', 'right')];
+
+            if (keypoint.name.startsWith('left') && counterpart !== undefined) {
+                keypoint.swap(counterpart);
+                keypoint.updateConnections(IDENTITY_MATRIX);
+                counterpart.updateConnections(IDENTITY_MATRIX);
+            }
+        });
+    }
 };
 
 function formatColor(color: [number, number, number]): string {
@@ -451,6 +487,7 @@ class OpenposeBody extends OpenposeObject {
             });
 
         super(keypoints, connections);
+        this.flippable = true;
     }
 
     static create(rawKeypoints: [number, number, number][]): OpenposeBody | undefined {
