@@ -46,7 +46,7 @@ interface AppData {
  */
 interface IncomingFrameMessage {
   modalId: string;
-  imageURL: string;
+  imageURL: string | undefined;
   poseURL: string;
 };
 
@@ -482,7 +482,7 @@ export default defineComponent({
       // Handle incoming frame message.
       window.addEventListener('message', (event) => {
         const message = event.data as IncomingFrameMessage;
-        if (_.some([message.modalId, message.poseURL, message.imageURL], o => o === undefined)) {
+        if (_.some([message.modalId, message.poseURL], o => o === undefined)) {
           console.debug(`Unrecognized frame message received: ${JSON.stringify(message)}.`);
           return;
         }
@@ -898,18 +898,21 @@ export default defineComponent({
       this.canvasWidth = openposeJson.canvas_width;
       this.loadPeopleFromJson(openposeJson);
 
-      const imageFile = {
-        locked: false,
-        scale: 1.0,
-        name: 'controlnet input',
-        uid: await calculateHash(message.imageURL),
-      } as LockableUploadFile;
-      this.uploadedImageList.push(imageFile);
-      this.loadBackgroundImageFromURL(message.imageURL);
-      const [imgWidth, imgHeight] = await getImageDimensionsFromDataURL(message.imageURL);
-      this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
-      imageFile.locked = true;
-      this.onLockedChange(imageFile, true);
+      // (Optional) Loads background image.
+      if (message.imageURL) {
+        const imageFile = {
+          locked: false,
+          scale: 1.0,
+          name: 'controlnet input',
+          uid: await calculateHash(message.imageURL),
+        } as LockableUploadFile;
+        this.uploadedImageList.push(imageFile);
+        this.loadBackgroundImageFromURL(message.imageURL);
+        const [imgWidth, imgHeight] = await getImageDimensionsFromDataURL(message.imageURL);
+        this.scaleImage(imageFile, Math.min(this.canvasHeight / imgHeight, this.canvasWidth / imgWidth));
+        imageFile.locked = true;
+        this.onLockedChange(imageFile, true);
+      }
     },
     getCanvasAsOpenposeJson(): IOpenposeJson {
       return {
