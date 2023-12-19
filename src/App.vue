@@ -1081,7 +1081,7 @@ export default defineComponent({
           @removeObject="removePerson(person)" :key="person.id">
           <template #extra-control>
             <!-- TODO: make this repetitive code a component. -->
-            <div v-if="person.left_hand === undefined">
+            <div v-if="person.left_hand === undefined && !person.isAnimal">
               <a-button @click="addDefaultObject(person, OpenposeBodyPart.LEFT_HAND)">{{ $t('ui.addLeftHand')
               }}</a-button>
               <a-upload accept="application/json"
@@ -1092,7 +1092,7 @@ export default defineComponent({
                 </a-button>
               </a-upload>
             </div>
-            <div v-if="person.right_hand === undefined">
+            <div v-if="person.right_hand === undefined && !person.isAnimal">
               <a-button @click="addDefaultObject(person, OpenposeBodyPart.RIGHT_HAND)">{{ $t('ui.addRightHand')
               }}</a-button>
               <a-upload accept="application/json"
@@ -1103,7 +1103,7 @@ export default defineComponent({
                 </a-button>
               </a-upload>
             </div>
-            <div v-if="person.face === undefined">
+            <div v-if="person.face === undefined && !person.isAnimal">
               <a-upload accept="application/json"
                 :beforeUpload="(file: Blob) => addJsonObject(file, person, OpenposeBodyPart.FACE)"
                 :showUploadList="false">
