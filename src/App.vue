@@ -4,7 +4,17 @@ import { fabric } from 'fabric';
 import { PlusSquareOutlined, CloseOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import OpenposeObjectPanel from './components/OpenposeObjectPanel.vue';
 import Header from './components/Header.vue';
-import { OpenposePerson, OpenposeBody, OpenposeHand, OpenposeFace, OpenposeKeypoint2D, OpenposeObject, type IOpenposeJson, OpenposeBodyPart } from './Openpose';
+import {
+  OpenposePerson,
+  OpenposeBody,
+  OpenposeHand,
+  OpenposeFace,
+  OpenposeKeypoint2D,
+  OpenposeObject,
+  type IOpenposeJson,
+  OpenposeBodyPart,
+  OpenposeAnimal,
+} from './Openpose';
 import type { UploadFile } from 'ant-design-vue';
 import LockSwitch from './components/LockSwitch.vue';
 import _ from 'lodash';
@@ -785,7 +795,9 @@ export default defineComponent({
       }
       const canvasHeight = poseJson.canvas_height;
       const canvasWidth = poseJson.canvas_width;
-      return poseJson.people.map((personJson): OpenposePerson | undefined => {
+
+
+      return (poseJson.people || []).map((personJson): OpenposePerson | undefined => {
         const body = OpenposeBody.create(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight));
         if (body === undefined) {
           // If body is malformatted, no need to render face/hand.
@@ -800,7 +812,12 @@ export default defineComponent({
           personJson.face_keypoints_2d ?
             OpenposeFace.create(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
         )
-      }).filter(person => person !== undefined) as OpenposePerson[];
+      }).concat(
+        (poseJson.animals || []).map((animal): OpenposePerson | undefined => {
+          const openposeAnimal = OpenposeAnimal.create(preprocessPoints(animal, canvasWidth, canvasHeight))
+          return openposeAnimal ? new OpenposePerson(null, openposeAnimal) : undefined;
+        })
+      ).filter(person => person !== undefined) as OpenposePerson[];
     },
     /**
      * Adds a body part from the given JSON file.
@@ -917,7 +934,10 @@ export default defineComponent({
     getCanvasAsOpenposeJson(): IOpenposeJson {
       return {
         people: [...this.people.values()]
-          .filter(person => !person.allKeypointsInvisible())
+          .filter(person => !person.allKeypointsInvisible() && !person.isAnimal)
+          .map(person => person.toJson()),
+        animals: [...this.people.values()]
+          .filter(person => !person.allKeypointsInvisible() && person.isAnimal)
           .map(person => person.toJson()),
         canvas_width: this.canvasWidth,
         canvas_height: this.canvasHeight,

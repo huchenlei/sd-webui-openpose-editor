@@ -298,7 +298,7 @@ class OpenposeObject {
         const objects = [...this.keypoints, ...this.connections].map(o => toRaw(o));
 
         // Get all the objects as selection
-        var sel = new fabric.ActiveSelection(objects, {
+        const sel = new fabric.ActiveSelection(objects, {
             canvas: this.canvas,
             lockScalingX: true,
             lockScalingY: true,
@@ -656,14 +656,14 @@ class OpenposePerson {
     static id = 0;
 
     name: string;
-    body: OpenposeBody;
+    body: OpenposeBody | OpenposeAnimal;
     left_hand: OpenposeHand | undefined;
     right_hand: OpenposeHand | undefined;
     face: OpenposeFace | undefined;
     id: number;
     visible: boolean;
 
-    constructor(name: string | null, body: OpenposeBody,
+    constructor(name: string | null, body: OpenposeBody | OpenposeAnimal,
         left_hand: OpenposeHand | undefined = undefined,
         right_hand: OpenposeHand | undefined = undefined,
         face: OpenposeFace | undefined = undefined
@@ -675,6 +675,10 @@ class OpenposePerson {
         this.id = OpenposePerson.id++;
         this.visible = true;
         this.name = name == null ? `Person ${this.id}` : name;
+    }
+
+    get isAnimal(): boolean {
+        return this.body instanceof OpenposeAnimal;
     }
 
     addToCanvas(openposeCanvas: fabric.Rect) {
@@ -694,7 +698,10 @@ class OpenposePerson {
         return _.every(this.allKeypoints(), keypoint => !keypoint._visible);
     }
 
-    toJson(): IOpenposePersonJson {
+    toJson(): IOpenposePersonJson | number[] {
+        if (this.isAnimal) {
+            return this.body.serialize();
+        }
         return {
             pose_keypoints_2d: this.body.serialize(),
             hand_right_keypoints_2d: this.right_hand?.serialize(),
@@ -709,7 +716,7 @@ class OpenposePerson {
         const forearm_length = wrist_keypoint.distanceTo(elbow_keypoint);
         const hand_length = hand.size * 4; // There are 4 connections from wrist_joint to any fingertips.
         // Approximate hand size as 70% of forearm length.
-        let scaleRatio = forearm_length * 0.7 / hand_length;
+        const scaleRatio = forearm_length * 0.7 / hand_length;
         hand.group!.scale(scaleRatio);
     }
 
@@ -748,8 +755,8 @@ class OpenposePerson {
         hand.grouped = true;
         // Move the group so that the wrist joint is at the wrist keypoint
         const wrist_joint = hand.keypoints[0]; // Assuming the wrist joint is the first keypoint
-        let dx = wrist_keypoint.abs_x - wrist_joint.abs_x;
-        let dy = wrist_keypoint.abs_y - wrist_joint.abs_y;
+        const dx = wrist_keypoint.abs_x - wrist_joint.abs_x;
+        const dy = wrist_keypoint.abs_y - wrist_joint.abs_y;
         hand.group!.left! += dx;
         hand.group!.top! += dy;
     }
@@ -763,11 +770,17 @@ class OpenposePerson {
     }
 
     public attachLeftHand(hand: OpenposeHand) {
+        if (!(this.body instanceof OpenposeBody)) {
+            throw "Hand not supported for OpenposeAnimal.";
+        }
         this.adjustHand(hand, this.body.getKeypointByName('left_wrist'), this.body.getKeypointByName('left_elbow'));
         this.left_hand = hand;
     }
 
     public attachRightHand(hand: OpenposeHand) {
+        if (!(this.body instanceof OpenposeBody)) {
+            throw "Hand not supported for OpenposeAnimal.";
+        }
         this.adjustHand(hand, this.body.getKeypointByName('right_wrist'), this.body.getKeypointByName('right_elbow'));
         this.right_hand = hand;
     }
@@ -777,6 +790,90 @@ class OpenposePerson {
         this.face = face;
     }
 };
+
+class OpenposeAnimal extends OpenposeObject {
+    // Note: the index here is from 1. So we need to shift -1 to get 0-indexed connections.
+    static keypoint_connections: [number, number][] = [
+        [1, 2],
+        [2, 3],
+        [1, 3],
+        [3, 4],
+        [4, 9],
+        [9, 10],
+        [10, 11],
+        [4, 6],
+        [6, 7],
+        [7, 8],
+        [4, 5],
+        [5, 15],
+        [15, 16],
+        [16, 17],
+        [5, 12],
+        [12, 13],
+        [13, 14],
+    ];
+
+    static colors: [number, number, number][] = [
+        [255, 255, 255],
+        [100, 255, 100],
+        [150, 255, 255],
+        [100, 50, 255],
+        [50, 150, 200],
+        [0, 255, 255],
+        [0, 150, 0],
+        [0, 0, 255],
+        [0, 0, 150],
+        [255, 50, 255],
+        [255, 0, 255],
+        [255, 0, 0],
+        [150, 0, 0],
+        [255, 255, 100],
+        [0, 150, 0],
+        [255, 255, 0],
+        [150, 150, 150],
+    ];
+
+    static keypoint_names: string[] = Array.from(Array(17).keys()).map(i => `Keypoint-${i}`);
+
+    constructor(rawKeypoints: [number, number, number][]) {
+        console.log(OpenposeAnimal.keypoint_names);
+        const keypoints = _.zipWith(rawKeypoints, OpenposeAnimal.colors, OpenposeAnimal.keypoint_names,
+            (p, color, name) => new OpenposeKeypoint2D(
+                p[0],
+                p[1],
+                p[2] > 0 ? 1.0 : 0.0,
+                formatColor(color),
+                name,
+                /* opacity= */ 1.0,
+                /* constant_radius= */ 2
+            ));
+
+        const connections = _.zipWith(OpenposeAnimal.keypoint_connections, OpenposeAnimal.colors.slice(0, 17),
+            (connection, color) => {
+                return new OpenposeConnection(
+                    keypoints[connection[0] - 1],
+                    keypoints[connection[1] - 1],
+                    formatColor(color),
+                    /* opacity= */ 1.0,
+                    /* strokeWidth= */ 4
+                );
+            });
+
+        super(keypoints, connections);
+        this.flippable = true;
+    }
+
+    static create(rawKeypoints: [number, number, number][]): OpenposeAnimal | undefined {
+        if (rawKeypoints.length < OpenposeAnimal.keypoint_names.length) {
+            console.warn(
+                `Wrong number of keypoints for openpose body(Coco format). 
+                Expect ${OpenposeBody.keypoint_names.length} but got ${rawKeypoints.length}.`)
+            return undefined;
+        }
+        rawKeypoints.slice(0, OpenposeAnimal.keypoint_names.length);
+        return new OpenposeAnimal(rawKeypoints);
+    }
+}
 
 interface IOpenposePersonJson {
     pose_keypoints_2d: number[],
@@ -788,7 +885,8 @@ interface IOpenposePersonJson {
 interface IOpenposeJson {
     canvas_width: number;
     canvas_height: number;
-    people: IOpenposePersonJson[];
+    people: IOpenposePersonJson[] | undefined;
+    animals: number[][] | undefined;
 };
 
 export {
@@ -800,6 +898,7 @@ export {
     OpenposeHand,
     OpenposeFace,
     OpenposeBodyPart,
+    OpenposeAnimal,
 };
 
 export type {
