@@ -56,13 +56,15 @@ interface AppData {
  */
 interface IncomingFrameMessage {
   modalId: string;
-  imageURL: string | undefined;
-  poseURL: string;
+  imageURL?: string;
+  poseURL?: string;
+  poses?: IOpenposeJson;
 };
 
 interface OutgoingFrameMessage {
   modalId: string;
   poseURL: string;
+  poses: IOpenposeJson;
 };
 
 const default_body_keypoints: [number, number, number][] = [
@@ -492,7 +494,7 @@ export default defineComponent({
       // Handle incoming frame message.
       window.addEventListener('message', (event) => {
         const message = event.data as IncomingFrameMessage;
-        if (_.some([message.modalId, message.poseURL], o => o === undefined)) {
+        if (message.modalId === undefined) {
           console.debug(`Unrecognized frame message received: ${JSON.stringify(message)}.`);
           return;
         }
@@ -910,7 +912,11 @@ export default defineComponent({
       this.modalId = message.modalId;
 
       this.clearCanvas();
-      const openposeJson = parseDataURLtoJSON(message.poseURL) as IOpenposeJson;
+      const openposeJson =
+        message.poseURL?
+          parseDataURLtoJSON(message.poseURL) as IOpenposeJson:
+          message.poses!;
+
       this.canvasHeight = openposeJson.canvas_height;
       this.canvasWidth = openposeJson.canvas_width;
       this.loadPeopleFromJson(openposeJson);
@@ -945,9 +951,11 @@ export default defineComponent({
     },
     sendCanvasAsFrameMessage() {
       if (this.modalId === undefined) return;
+      const poses = this.getCanvasAsOpenposeJson();
       window.parent.postMessage({
         modalId: this.modalId,
-        poseURL: serializeJSONtoDataURL(this.getCanvasAsOpenposeJson()),
+        poseURL: serializeJSONtoDataURL(poses),
+        poses: poses,
       } as OutgoingFrameMessage, '*');
     },
     downloadCanvasAsJson() {
@@ -1139,4 +1147,4 @@ export default defineComponent({
   opacity: 50%;
   text-decoration: line-through;
 }
-</style> 
+</style>
