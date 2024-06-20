@@ -58,7 +58,7 @@ interface IncomingFrameMessage {
   modalId: string;
   imageURL?: string;
   poseURL?: string;
-  poses?: IOpenposeJson;
+  poses?: IOpenposeJson | IOpenposeJson[];
 };
 
 interface OutgoingFrameMessage {
@@ -930,7 +930,7 @@ export default defineComponent({
       const openposeJson =
         message.poseURL?
           parseDataURLtoJSON(message.poseURL) as IOpenposeJson:
-          message.poses!;
+          Array.isArray(message.poses!) ? message.poses![0] : message.poses!;
 
       this.canvasHeight = openposeJson.canvas_height;
       this.canvasWidth = openposeJson.canvas_width;
