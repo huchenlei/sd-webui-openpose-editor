@@ -363,9 +363,7 @@ export default defineComponent({
         stopContextMenu: true,
       }));
 
-      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.95);
-      const htmlCanvasHeight = Math.round(window.innerHeight * 0.95);
-      this.resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
+      this.resizeHTMLCanvas();
       this.canvas.add(this.openposeCanvas);
       // The openpose canvas should be at last layer.
       this.canvas.moveTo(this.openposeCanvas, 0);
@@ -492,12 +490,14 @@ export default defineComponent({
       });
 
       // Handle incoming frame message.
-      window.addEventListener('message', (event) => {
+      window.addEventListener('message', async (event) => {
         const message = event.data as IncomingFrameMessage;
         if (message.modalId === undefined) {
           console.debug(`Unrecognized frame message received: ${JSON.stringify(message)}.`);
           return;
         }
+        await this.waitWindowVisible();
+        this.resizeHTMLCanvas();
         this.loadCanvasFromFrameMessage(message);
       });
 
@@ -609,8 +609,23 @@ export default defineComponent({
       }
       this.canvas?.renderAll();
     },
+    async waitWindowVisible(): Promise<void> {
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (window.innerHeight > 0) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 100);
+      });
+    },
+    resizeHTMLCanvas() {
+      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.95);
+      const htmlCanvasHeight = Math.round(window.innerHeight * 0.95);
+      this._resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
+    },
     // HTML canvas is the real canvas object.
-    resizeHTMLCanvas(newWidth: number, newHeight: number) {
+    _resizeHTMLCanvas(newWidth: number, newHeight: number) {
       if (!this.canvas)
         return;
       this.canvas.setWidth(newWidth);
