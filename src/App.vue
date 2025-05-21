@@ -496,9 +496,12 @@ export default defineComponent({
           console.debug(`Unrecognized frame message received: ${JSON.stringify(message)}.`);
           return;
         }
+        // Wait until the window is visible to ensure proper rendering
         await this.waitWindowVisible();
+        // Load JSON to update canvasWidth and canvasHeight
+        await this.loadCanvasFromFrameMessage(message);
+        // Resize canvas using updated dimensions
         this.resizeHTMLCanvas();
-        this.loadCanvasFromFrameMessage(message);
       });
 
       // Inform the parent frame that iframe is ready to receive message.
@@ -620,9 +623,21 @@ export default defineComponent({
       });
     },
     resizeHTMLCanvas() {
-      const htmlCanvasWidth = Math.round((window.innerWidth * 16 / 24) * 0.95);
-      const htmlCanvasHeight = Math.round(window.innerHeight * 0.95);
+      // Use canvasWidth and canvasHeight from OpenPose JSON to set HTML canvas size
+      let htmlCanvasWidth = this.canvasWidth || 512; // Fallback to default if canvasWidth is undefined
+      let htmlCanvasHeight = this.canvasHeight || 512; // Fallback to default if canvasHeight is undefined
+
+      // Ensure canvas dimensions are within reasonable limits
+      htmlCanvasWidth = Math.max(64, Math.min(4096, htmlCanvasWidth));
+      htmlCanvasHeight = Math.max(64, Math.min(4096, htmlCanvasHeight));
+
       this._resizeHTMLCanvas(htmlCanvasWidth, htmlCanvasHeight);
+
+      // Adjust viewport zoom if canvas is larger than window
+      if (this.canvas && (htmlCanvasWidth > window.innerWidth || htmlCanvasHeight > window.innerHeight)) {
+        const zoom = Math.min(window.innerWidth / htmlCanvasWidth, window.innerHeight / htmlCanvasHeight) * 0.95;
+        this.canvas.setZoom(zoom);
+      }
     },
     // HTML canvas is the real canvas object.
     _resizeHTMLCanvas(newWidth: number, newHeight: number) {
@@ -640,8 +655,9 @@ export default defineComponent({
       this.openposeCanvas.set({
         width: newWidth,
         height: newHeight,
+        left: 0, // Ensure openposeCanvas stays at origin
+        top: 0
       });
-      this.canvas.centerObject(this.openposeCanvas);
       this.openposeCanvas.setCoords();
       this.canvas.requestRenderAll();
     },
@@ -803,6 +819,7 @@ export default defineComponent({
       });
     },
     parseOpenposeJson(poseJson: IOpenposeJson): OpenposePerson[] {
+      // Preprocess keypoints to adjust for canvas dimensions
       function preprocessPoints(nums: number[], canvasWidth: number, canvasHeight: number): [number, number, number][] {
         const normalized = _.every(nums, num => Math.abs(num) <= 1.0);
         const xFactor = normalized ? canvasWidth : 1.0;
@@ -810,17 +827,17 @@ export default defineComponent({
         const points = _.chunk(nums, 3) as [number, number, number][];
         return points.map(p => [p[0] * xFactor, p[1] * yFactor, p[2]]);
       }
-      const canvasHeight = poseJson.canvas_height;
-      const canvasWidth = poseJson.canvas_width;
-
+      // Use fallback dimensions if canvas_width or canvas_height are undefined
+      const canvasWidth = poseJson.canvas_width || 512;
+      const canvasHeight = poseJson.canvas_height || 512;
 
       return (poseJson.people || []).map((personJson): OpenposePerson | undefined => {
         const body = OpenposeBody.create(preprocessPoints(personJson.pose_keypoints_2d, canvasWidth, canvasHeight));
         if (body === undefined) {
-          // If body is malformatted, no need to render face/hand.
+          // If body is malformatted, no need to render face/hand
           return undefined;
         }
-        return new OpenposePerson(null,
+        const person = new OpenposePerson(null,
           body,
           personJson.hand_left_keypoints_2d ?
             OpenposeHand.create(preprocessPoints(personJson.hand_left_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
@@ -828,11 +845,16 @@ export default defineComponent({
             OpenposeHand.create(preprocessPoints(personJson.hand_right_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
           personJson.face_keypoints_2d ?
             OpenposeFace.create(preprocessPoints(personJson.face_keypoints_2d, canvasWidth, canvasHeight)) : undefined,
-        )
+        );
+        return person;
       }).concat(
         (poseJson.animals || []).map((animal): OpenposePerson | undefined => {
-          const openposeAnimal = OpenposeAnimal.create(preprocessPoints(animal, canvasWidth, canvasHeight))
-          return openposeAnimal ? new OpenposePerson(null, openposeAnimal) : undefined;
+          const openposeAnimal = OpenposeAnimal.create(preprocessPoints(animal, canvasWidth, canvasHeight));
+          if (!openposeAnimal) {
+            return undefined;
+          }
+          const animalPerson = new OpenposePerson(null, openposeAnimal);
+          return animalPerson;
         })
       ).filter(person => person !== undefined) as OpenposePerson[];
     },
@@ -884,12 +906,20 @@ export default defineComponent({
       return false;
     },
     loadPeopleFromJson(poseJson: IOpenposeJson) {
-      const canvasHeight = poseJson.canvas_height;
-      const canvasWidth = poseJson.canvas_width;
+      // Update canvas dimensions, preferring larger values
+      const canvasHeight = poseJson.canvas_height || this.canvasHeight;
+      const canvasWidth = poseJson.canvas_width || this.canvasWidth;
       this.canvasHeight = _.max([canvasHeight, this.canvasHeight])!;
       this.canvasWidth = _.max([canvasWidth, this.canvasWidth])!;
+
       this.resizeOpenposeCanvas(this.canvasWidth, this.canvasHeight);
-      this.parseOpenposeJson(poseJson).forEach(person => this.addPerson(person));
+
+      const people = this.parseOpenposeJson(poseJson);
+      this.people.clear();
+      this.keypointMap.clear();
+      people.forEach(person => {
+        this.addPerson(person);
+      });
     },
     /**
      * Clear everything on the canvas.
@@ -924,16 +954,24 @@ export default defineComponent({
       this.loadBackgroundImageFromURL(data.image_url);
     },
     async loadCanvasFromFrameMessage(message: IncomingFrameMessage) {
+      // Set modal ID for communication with ControlNet
       this.modalId = message.modalId;
 
+      // Clear existing canvas content
       this.clearCanvas();
-      const openposeJson =
-        message.poseURL?
-          parseDataURLtoJSON(message.poseURL) as IOpenposeJson:
-          Array.isArray(message.poses!) ? message.poses![0] : message.poses!;
 
-      this.canvasHeight = openposeJson.canvas_height;
-      this.canvasWidth = openposeJson.canvas_width;
+      // Parse OpenPose JSON from message
+      const openposeJson =
+        message.poseURL
+          ? parseDataURLtoJSON(message.poseURL) as IOpenposeJson
+          : Array.isArray(message.poses!)
+            ? message.poses![0]
+            : message.poses!;
+
+      this.canvasWidth = openposeJson.canvas_width || 512;
+      this.canvasHeight = openposeJson.canvas_height || 512;
+
+      // Load people from JSON
       this.loadPeopleFromJson(openposeJson);
 
       // (Optional) Loads background image.
